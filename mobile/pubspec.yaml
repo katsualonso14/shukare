@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.0
+  sdk: ">=3.0.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -30,10 +30,25 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+
+  # 状態管理（公式推奨に近い構成・テストしやすい）
+  flutter_riverpod: ^2.6.1
+
+  # 月表示カレンダー（カスタムビルダーで見た目を完全制御）
+  table_calendar: ^3.1.2
+
+  # ローカル永続化（シンプル・依存少・将来Hiveへ差し替え可能）
+  shared_preferences: ^2.3.3
+
+  # 毎日決まった時間の通知
+  flutter_local_notifications: ^18.0.1
+
+  # 日付フォーマット・月名（locale対応）
+  intl: ^0.19.0
+
+  # 通知の日次スケジュール（タイムゾーン指定）
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:
@@ -44,7 +59,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^6.0.0
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -57,10 +72,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/app_icon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

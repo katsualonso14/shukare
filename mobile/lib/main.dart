@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'infrastructure/datasource/notification_schedule_datasource.dart';
+import 'infrastructure/di/infrastructure_providers.dart';
+import 'presentation/app.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('ja');
+  final prefs = await SharedPreferences.getInstance();
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(home: const HomePage());
+  final scheduleDatasource = NotificationScheduleDatasource();
+  await scheduleDatasource.initialize();
+  final enabled = prefs.getBool('notification_enabled') ?? true;
+  if (enabled) {
+    final hour = prefs.getInt('notification_hour') ?? 20;
+    final minute = prefs.getInt('notification_minute') ?? 0;
+    await scheduleDatasource.scheduleDaily(hour: hour, minute: minute);
   }
-}
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('shukare')),
-      body: Center(child: Text('kick off')),
-    );
-  }
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const App(),
+    ),
+  );
 }
