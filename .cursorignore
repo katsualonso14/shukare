@@ -1,0 +1,7 @@
+# 無視するもの
+Pods/
+*.xcworkspace
+*.xcodeproj
+DerivedData/
+
+# それ以外は見る
