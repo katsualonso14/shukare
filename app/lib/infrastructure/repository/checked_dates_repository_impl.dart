@@ -10,4 +10,7 @@ class CheckedDatesRepositoryImpl implements CheckedDatesRepository {
 
   @override
   Future<void> save(Set<String> dates) => _datasource.setCheckedDates(dates);
+
+  @override
+  Future<void> clear() => _datasource.clearAllCheckedDates();
 }

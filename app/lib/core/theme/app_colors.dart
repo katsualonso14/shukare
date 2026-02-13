@@ -15,9 +15,12 @@ class AppColors {
 
   // くすみアクセント
   static const Color roseDust = Color(0xFFC4A69D);   // ローズダスト
-  static const Color sage = Color(0xFF9CAF88);       // セージ
+  static const Color sage = Color(0xFF9CAF88);       // セージ（メインカラー）
   static const Color dustyBlush = Color(0xFFD4B8B0); // ダスティブラッシュ
   static const Color warmGray = Color(0xFFA89F99);
+  
+  // メインアクセントカラー（UI全体で使用）
+  static const Color primary = sage;
 
   // チェック表示用（優しい緑＝テーマ色）
   static const Color checkGreen = Color(0xFF9CAF88);       // セージ（メイン）

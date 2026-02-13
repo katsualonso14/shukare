@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/usecase/clear_checked_dates_usecase.dart';
 import '../../domain/usecase/get_checked_dates_usecase.dart';
 import '../../domain/usecase/get_notification_settings_usecase.dart';
 import '../../domain/usecase/set_notification_settings_usecase.dart';
@@ -12,6 +13,10 @@ final getCheckedDatesUsecaseProvider = Provider<GetCheckedDatesUsecase>((ref) {
 
 final toggleCheckUsecaseProvider = Provider<ToggleCheckUsecase>((ref) {
   return ToggleCheckUsecase(ref.watch(checkedDatesRepositoryProvider));
+});
+
+final clearCheckedDatesUsecaseProvider = Provider<ClearCheckedDatesUsecase>((ref) {
+  return ClearCheckedDatesUsecase(ref.watch(checkedDatesRepositoryProvider));
 });
 
 final getNotificationSettingsUsecaseProvider =

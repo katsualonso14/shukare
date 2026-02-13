@@ -11,6 +11,7 @@ class PreferenceDatasource {
   static const String _keyNotificationEnabled = 'notification_enabled';
   static const String _keyNotificationHour = 'notification_hour';
   static const String _keyNotificationMinute = 'notification_minute';
+  static const String _keyCalendarWeekStartSunday = 'calendar_week_start_sunday';
 
   // --- Checked dates ---
   Future<Set<String>> getCheckedDates() async {
@@ -47,5 +48,18 @@ class PreferenceDatasource {
   Future<void> setNotificationTime(int hour, int minute) async {
     await _prefs.setInt(_keyNotificationHour, hour);
     await _prefs.setInt(_keyNotificationMinute, minute);
+  }
+
+  // --- Calendar week start (true = 日曜始まり, false = 月曜始まり) ---
+  bool getCalendarWeekStartSunday() =>
+      _prefs.getBool(_keyCalendarWeekStartSunday) ?? false;
+
+  Future<void> setCalendarWeekStartSunday(bool value) async {
+    await _prefs.setBool(_keyCalendarWeekStartSunday, value);
+  }
+
+  /// チェック済み日付をすべて削除（データの全リセット）
+  Future<void> clearAllCheckedDates() async {
+    await _prefs.remove(_keyCheckedDates);
   }
 }

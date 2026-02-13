@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../providers/calendar_week_start_provider.dart';
 import '../../../providers/checked_dates_provider.dart';
 import '../check_mark_style.dart';
 import 'date_detail_bottom_sheet.dart';
@@ -15,8 +16,13 @@ class MonthCalendar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final checkedDatesAsync = ref.watch(checkedDatesProvider);
+    final weekStartSunday = ref.watch(calendarWeekStartSundayProvider);
     return checkedDatesAsync.when(
-      data: (checkedSet) => _CalendarBody(checkedDates: checkedSet),
+      data: (checkedSet) => _CalendarBody(
+        checkedDates: checkedSet,
+        startingDayOfWeek:
+            weekStartSunday ? StartingDayOfWeek.sunday : StartingDayOfWeek.monday,
+      ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('$e')),
     );
@@ -24,9 +30,13 @@ class MonthCalendar extends ConsumerWidget {
 }
 
 class _CalendarBody extends ConsumerStatefulWidget {
-  const _CalendarBody({required this.checkedDates});
+  const _CalendarBody({
+    required this.checkedDates,
+    this.startingDayOfWeek = StartingDayOfWeek.monday,
+  });
 
   final Set<String> checkedDates;
+  final StartingDayOfWeek startingDayOfWeek;
 
   @override
   ConsumerState<_CalendarBody> createState() => _CalendarBodyState();
@@ -48,7 +58,7 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
       focusedDay: _focusedDay,
       selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
       calendarFormat: CalendarFormat.month,
-      startingDayOfWeek: StartingDayOfWeek.monday,
+      startingDayOfWeek: widget.startingDayOfWeek,
       headerStyle: HeaderStyle(
         formatButtonVisible: false,
         titleCentered: true,
