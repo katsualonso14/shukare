@@ -1,22 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../providers/checked_dates_provider.dart';
+import '../../providers/selected_date_provider.dart';
 import '../settings/settings_screen.dart';
 import 'widgets/month_calendar.dart';
 
 class CalendarScreen extends ConsumerWidget {
   const CalendarScreen({super.key});
 
-  static String _todayKey() {
+  static String _dateKey(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
+  static DateTime _today() {
     final n = DateTime.now();
-    return '${n.year}-${n.month.toString().padLeft(2, '0')}-${n.day.toString().padLeft(2, '0')}';
+    return DateTime(n.year, n.month, n.day);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final checkedAsync = ref.watch(checkedDatesProvider);
-    final todayKey = _todayKey();
+    final selectedDate = ref.watch(selectedDateProvider);
+    final selectedKey = _dateKey(selectedDate);
+    final today = _today();
+    final todayKey = _dateKey(today);
+    final isToday = selectedKey == todayKey;
 
     return Scaffold(
       body: SafeArea(
@@ -63,8 +73,8 @@ class CalendarScreen extends ConsumerWidget {
                     hasScrollBody: false,
                     child: checkedAsync.maybeWhen(
                       data: (checked) {
-                        final isTodayChecked = checked.contains(todayKey);
-                        return _AppIconDecoration(visible: isTodayChecked);
+                        final isChecked = checked.contains(selectedKey);
+                        return _AppIconDecoration(visible: isChecked);
                       },
                       orElse: () => const SizedBox.shrink(),
                     ),
@@ -77,11 +87,14 @@ class CalendarScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
               child: checkedAsync.when(
                 data: (checked) {
-                  final isTodayChecked = checked.contains(todayKey);
-                  return _TodayButton(
-                    isChecked: isTodayChecked,
-                    onTap: () =>
-                        ref.read(checkedDatesProvider.notifier).toggle(todayKey),
+                  final isChecked = checked.contains(selectedKey);
+                  return _CheckButton(
+                    isChecked: isChecked,
+                    isToday: isToday,
+                    selectedDate: selectedDate,
+                    onTap: () {
+                      ref.read(checkedDatesProvider.notifier).toggle(selectedKey);
+                    },
                   );
                 },
                 loading: () => const SizedBox.shrink(),
@@ -95,14 +108,29 @@ class CalendarScreen extends ConsumerWidget {
   }
 }
 
-class _TodayButton extends StatelessWidget {
-  const _TodayButton({
+class _CheckButton extends StatelessWidget {
+  const _CheckButton({
     required this.isChecked,
+    required this.isToday,
+    required this.selectedDate,
     required this.onTap,
   });
 
   final bool isChecked;
+  final bool isToday;
+  final DateTime selectedDate;
   final VoidCallback onTap;
+
+  String get _buttonText {
+    if (isToday) {
+      return isChecked ? 'また明日' : '今日もできた';
+    } else {
+      // 過去の日付
+      final month = selectedDate.month;
+      final day = selectedDate.day;
+      return isChecked ? '$month/$day を取り消す' : '$month/$day もできた';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +148,7 @@ class _TodayButton extends StatelessWidget {
           elevation: 0,
         ),
         child: Text(
-          isChecked ? 'また明日' : '今日もできた',
+          _buttonText,
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w500,

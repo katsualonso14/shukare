@@ -10,22 +10,31 @@ class DayCell extends StatelessWidget {
     required this.isChecked,
     required this.isCurrentMonth,
     required this.isToday,
+    this.isSelected = false,
+    this.isFuture = false,
     this.style = CheckMarkStyle.dot,
-    required this.onTap,
+    this.onTap,
   });
 
   final DateTime date;
   final bool isChecked;
   final bool isCurrentMonth;
   final bool isToday;
+  final bool isSelected;
+  final bool isFuture;
   final CheckMarkStyle style;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final textStyle = isCurrentMonth
         ? AppTypography.dayNumber
         : AppTypography.dayNumberMuted;
+    
+    // 未来の日付はグレーアウト
+    final effectiveTextStyle = isFuture
+        ? textStyle.copyWith(color: AppColors.textMuted.withOpacity(0.4))
+        : textStyle;
 
     // セル高さに収める（日付24 + 間隔2 + ドット6 = 32px）。はみ出し時はクリップ
     return GestureDetector(
@@ -40,16 +49,11 @@ class DayCell extends StatelessWidget {
             Container(
               width: 24,
               height: 24,
-              decoration: isToday
-                  ? BoxDecoration(
-                      color: AppColors.todayHighlight,
-                      shape: BoxShape.circle,
-                    )
-                  : null,
+              decoration: _buildDecoration(),
               alignment: Alignment.center,
               child: Text(
                 '${date.day}',
-                style: textStyle.copyWith(fontSize: 13),
+                style: effectiveTextStyle.copyWith(fontSize: 13),
               ),
             ),
             const SizedBox(height: 2),
@@ -59,6 +63,23 @@ class DayCell extends StatelessWidget {
       ),
     ),
     );
+  }
+
+  BoxDecoration? _buildDecoration() {
+    if (isSelected && !isToday) {
+      // 選択中（今日以外）
+      return BoxDecoration(
+        color: AppColors.primary.withOpacity(0.15),
+        shape: BoxShape.circle,
+      );
+    } else if (isToday) {
+      // 今日
+      return BoxDecoration(
+        color: AppColors.todayHighlight,
+        shape: BoxShape.circle,
+      );
+    }
+    return null;
   }
 }
 
