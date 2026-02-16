@@ -58,6 +58,20 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
     return DateTime(d.year, d.month, d.day);
   }
 
+  void _handleDayTap(DateTime day) {
+    final now = DateTime.now();
+    final today = _normalizeDate(now);
+    final dayNormalized = _normalizeDate(day);
+    
+    // 未来の日付はタップ不可
+    if (dayNormalized.isAfter(today)) {
+      return;
+    }
+
+    // シングルタップで日付選択
+    ref.read(selectedDateProvider.notifier).state = dayNormalized;
+  }
+
   @override
   Widget build(BuildContext context) {
     return TableCalendar<int>(
@@ -67,27 +81,29 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
       selectedDayPredicate: (day) => isSameDay(widget.selectedDate, day),
       calendarFormat: CalendarFormat.month,
       startingDayOfWeek: widget.startingDayOfWeek,
+      rowHeight: 56,
+      daysOfWeekHeight: 32,
       headerStyle: HeaderStyle(
         formatButtonVisible: false,
         titleCentered: true,
         leftChevronPadding: EdgeInsets.zero,
         rightChevronPadding: EdgeInsets.zero,
-        headerPadding: const EdgeInsets.symmetric(vertical: 12),
-        titleTextStyle: AppTypography.monthYear,
+        headerPadding: const EdgeInsets.symmetric(vertical: 10),
+        titleTextStyle: AppTypography.monthYear.copyWith(fontSize: 20),
         leftChevronIcon: Icon(
           Icons.chevron_left,
           color: AppColors.calendarHeader,
-          size: 28,
+          size: 32,
         ),
         rightChevronIcon: Icon(
           Icons.chevron_right,
           color: AppColors.calendarHeader,
-          size: 28,
+          size: 32,
         ),
       ),
       daysOfWeekStyle: DaysOfWeekStyle(
-        weekdayStyle: AppTypography.weekday,
-        weekendStyle: AppTypography.weekday,
+        weekdayStyle: AppTypography.weekday.copyWith(fontSize: 14),
+        weekendStyle: AppTypography.weekday.copyWith(fontSize: 14),
       ),
       calendarStyle: CalendarStyle(
         outsideDaysVisible: true,
@@ -103,7 +119,8 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
           shape: BoxShape.circle,
         ),
         markerSize: 0,
-        cellMargin: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        cellMargin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+        cellPadding: const EdgeInsets.symmetric(vertical: 2),
       ),
       calendarBuilders: CalendarBuilders(
         defaultBuilder: (context, day, focusedDay) =>
@@ -116,20 +133,10 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
             _buildCell(context, day, focusedDay),
       ),
       onDaySelected: (selected, focused) {
-        final today = _normalizeDate(DateTime.now());
-        final selectedNormalized = _normalizeDate(selected);
-        
-        // 未来の日付はタップ不可
-        if (selectedNormalized.isAfter(today)) {
-          return;
-        }
-        
         setState(() {
           _focusedDay = focused;
         });
-        
-        // 今日または過去の日付を選択
-        ref.read(selectedDateProvider.notifier).state = selectedNormalized;
+        _handleDayTap(selected);
       },
       onPageChanged: (focused) {
         setState(() {
@@ -158,12 +165,6 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
       isSelected: isSelected,
       isFuture: isFuture,
       style: CheckMarkStyle.dot,
-      onTap: isFuture
-          ? null
-          : () {
-              // 過去・今日の日付のみ選択可能
-              ref.read(selectedDateProvider.notifier).state = dayNormalized;
-            },
     );
   }
 }

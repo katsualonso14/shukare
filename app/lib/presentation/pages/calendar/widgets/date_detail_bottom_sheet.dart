@@ -14,7 +14,13 @@ void showDateDetailBottomSheet({
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (context) => _DateDetailSheet(date: date),
+    isScrollControlled: true,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: _DateDetailSheet(date: date),
+    ),
   );
 }
 
@@ -55,6 +61,11 @@ class _DateDetailSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final checkedAsync = ref.watch(checkedDatesProvider);
+    final dateKey = DateFormat('yyyy-MM-dd').format(date);
+    final today = DateTime.now();
+    final normalizedToday = DateTime(today.year, today.month, today.day);
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final isToday = normalizedDate == normalizedToday;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -65,6 +76,7 @@ class _DateDetailSheet extends ConsumerWidget {
       child: checkedAsync.when(
         data: (checkedDates) {
           final streak = streakCount(date, checkedDates);
+          final isChecked = checkedDates.contains(dateKey);
 
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -97,6 +109,31 @@ class _DateDetailSheet extends ConsumerWidget {
                       fontWeight: FontWeight.w500,
                     ),
               ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    ref.read(checkedDatesProvider.notifier).toggle(dateKey);
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.surface,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    _getButtonText(isToday, isChecked, date),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
             ],
           );
         },
@@ -111,5 +148,15 @@ class _DateDetailSheet extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _getButtonText(bool isToday, bool isChecked, DateTime date) {
+    if (isToday) {
+      return isChecked ? 'また明日' : '今日もできた';
+    } else {
+      final month = date.month;
+      final day = date.day;
+      return isChecked ? '$month/$day を取り消す' : '$month/$day もできた';
+    }
   }
 }

@@ -13,7 +13,6 @@ class DayCell extends StatelessWidget {
     this.isSelected = false,
     this.isFuture = false,
     this.style = CheckMarkStyle.dot,
-    this.onTap,
   });
 
   final DateTime date;
@@ -23,7 +22,6 @@ class DayCell extends StatelessWidget {
   final bool isSelected;
   final bool isFuture;
   final CheckMarkStyle style;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -36,30 +34,29 @@ class DayCell extends StatelessWidget {
         ? textStyle.copyWith(color: AppColors.textMuted.withOpacity(0.4))
         : textStyle;
 
-    // セル高さに収める（日付24 + 間隔2 + ドット6 = 32px）。はみ出し時はクリップ
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: ClipRect(
-        child: Center(
-          child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: _buildDecoration(),
-              alignment: Alignment.center,
-              child: Text(
-                '${date.day}',
-                style: effectiveTextStyle.copyWith(fontSize: 13),
+    // セルサイズを拡大（日付32 + 間隔3 + ドット18 = 53px）
+    return ClipRect(
+      child: Center(
+        child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: _buildDecoration(),
+            alignment: Alignment.center,
+            child: Text(
+              '${date.day}',
+              style: effectiveTextStyle.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 2),
-            _CheckMark(style: style, isChecked: isChecked),
-          ],
-        ),
+          ),
+          const SizedBox(height: 3),
+          _CheckMark(style: style, isChecked: isChecked),
+        ],
       ),
     ),
     );
@@ -97,16 +94,16 @@ class _CheckMark extends StatelessWidget {
       case CheckMarkStyle.dot:
         // 優しい緑の二重丸（外側→内側の薄い緑）
         return Container(
-          width: 16,
-          height: 16,
+          width: 18,
+          height: 18,
           decoration: const BoxDecoration(
             color: AppColors.dayCheckedCircle,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Container(
-            width: 8,
-            height: 8,
+            width: 9,
+            height: 9,
             decoration: const BoxDecoration(
               color: AppColors.dayCheckedCircleInner,
               shape: BoxShape.circle,
