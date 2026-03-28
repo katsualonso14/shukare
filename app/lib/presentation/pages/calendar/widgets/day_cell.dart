@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../domain/entity/wake_up_record.dart';
+import '../../../../domain/entity/wake_up_status.dart';
 import '../check_mark_style.dart';
 
 class DayCell extends StatelessWidget {
   const DayCell({
     super.key,
     required this.date,
-    required this.isChecked,
+    this.record,
     required this.isCurrentMonth,
     required this.isToday,
     this.isSelected = false,
@@ -16,7 +18,7 @@ class DayCell extends StatelessWidget {
   });
 
   final DateTime date;
-  final bool isChecked;
+  final WakeUpRecord? record;
   final bool isCurrentMonth;
   final bool isToday;
   final bool isSelected;
@@ -55,7 +57,7 @@ class DayCell extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 3),
-          _CheckMark(style: style, isChecked: isChecked),
+          _CheckMark(style: style, record: record),
         ],
       ),
     ),
@@ -81,31 +83,47 @@ class DayCell extends StatelessWidget {
 }
 
 class _CheckMark extends StatelessWidget {
-  const _CheckMark({required this.style, required this.isChecked});
+  const _CheckMark({required this.style, this.record});
 
   final CheckMarkStyle style;
-  final bool isChecked;
+  final WakeUpRecord? record;
 
   @override
   Widget build(BuildContext context) {
-    if (!isChecked) return const SizedBox(height: 6, width: 6);
+    if (record == null) return const SizedBox(height: 6, width: 6);
+
+    // ステータスに応じた色を返す
+    Color _getStatusColor(WakeUpStatus status) {
+      switch (status) {
+        case WakeUpStatus.achieved:
+          return AppColors.dayCheckedCircle; // 達成: 緑
+        case WakeUpStatus.nearMiss:
+          return Colors.orange.shade300; // 惜しい: オレンジ
+        case WakeUpStatus.resting:
+          return Colors.blue.shade300; // お休み: 青
+        case WakeUpStatus.tried:
+          return Colors.purple.shade200; // 記録継続: 紫
+      }
+    }
+
+    final statusColor = _getStatusColor(record!.status);
 
     switch (style) {
       case CheckMarkStyle.dot:
-        // 優しい緑の二重丸（外側→内側の薄い緑）
+        // ステータスに応じた色の二重丸
         return Container(
           width: 18,
           height: 18,
-          decoration: const BoxDecoration(
-            color: AppColors.dayCheckedCircle,
+          decoration: BoxDecoration(
+            color: statusColor,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Container(
             width: 9,
             height: 9,
-            decoration: const BoxDecoration(
-              color: AppColors.dayCheckedCircleInner,
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.5),
               shape: BoxShape.circle,
             ),
           ),
@@ -116,7 +134,7 @@ class _CheckMark extends StatelessWidget {
           height: 10,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.checkRing, width: 1.5),
+            border: Border.all(color: statusColor, width: 1.5),
           ),
         );
       case CheckMarkStyle.fill:
@@ -124,7 +142,7 @@ class _CheckMark extends StatelessWidget {
           width: 24,
           height: 8,
           decoration: BoxDecoration(
-            color: AppColors.checkFill,
+            color: statusColor,
             borderRadius: BorderRadius.circular(6),
           ),
         );

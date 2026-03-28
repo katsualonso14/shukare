@@ -12,6 +12,11 @@ class PreferenceDatasource {
   static const String _keyNotificationHour = 'notification_hour';
   static const String _keyNotificationMinute = 'notification_minute';
   static const String _keyCalendarWeekStartSunday = 'calendar_week_start_sunday';
+  static const String _keyWakeUpRecords = 'wake_up_records';
+  static const String _keyTargetWakeUpHour = 'target_wake_up_hour';
+  static const String _keyTargetWakeUpMinute = 'target_wake_up_minute';
+  static const String _keyUserMbti = 'user_mbti';
+  static const String _keyUserPersonaType = 'user_persona_type';
 
   // --- Checked dates ---
   Future<Set<String>> getCheckedDates() async {
@@ -61,5 +66,75 @@ class PreferenceDatasource {
   /// チェック済み日付をすべて削除（データの全リセット）
   Future<void> clearAllCheckedDates() async {
     await _prefs.remove(_keyCheckedDates);
+  }
+
+  // --- Wake Up Records (新しいステータスベースの記録) ---
+  
+  /// すべての起床記録を取得
+  Future<Map<String, Map<String, dynamic>>> getWakeUpRecords() async {
+    final raw = _prefs.getString(_keyWakeUpRecords);
+    if (raw == null || raw.isEmpty) return {};
+    try {
+      final decoded = jsonDecode(raw) as Map<String, dynamic>?;
+      if (decoded == null) return {};
+      
+      final result = <String, Map<String, dynamic>>{};
+      decoded.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          result[key] = value;
+        }
+      });
+      return result;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// すべての起床記録を保存
+  Future<void> setWakeUpRecords(Map<String, Map<String, dynamic>> records) async {
+    await _prefs.setString(_keyWakeUpRecords, jsonEncode(records));
+  }
+
+  /// すべての起床記録をクリア
+  Future<void> clearAllWakeUpRecords() async {
+    await _prefs.remove(_keyWakeUpRecords);
+  }
+
+  // --- Target Wake Up Time (目標起床時刻) ---
+
+  /// 目標起床時刻を取得（デフォルト: 6:00）
+  Map<String, int> getTargetWakeUpTime() {
+    final hour = _prefs.getInt(_keyTargetWakeUpHour) ?? 6;
+    final minute = _prefs.getInt(_keyTargetWakeUpMinute) ?? 0;
+    return {'hour': hour, 'minute': minute};
+  }
+
+  /// 目標起床時刻を保存
+  Future<void> setTargetWakeUpTime(int hour, int minute) async {
+    await _prefs.setInt(_keyTargetWakeUpHour, hour);
+    await _prefs.setInt(_keyTargetWakeUpMinute, minute);
+  }
+
+  // --- User Profile (MBTI & PersonaType) ---
+
+  /// MBTIを取得（未設定の場合はnull）
+  String? getUserMbti() => _prefs.getString(_keyUserMbti);
+
+  /// MBTIを保存
+  Future<void> setUserMbti(String? mbti) async {
+    if (mbti == null) {
+      await _prefs.remove(_keyUserMbti);
+    } else {
+      await _prefs.setString(_keyUserMbti, mbti);
+    }
+  }
+
+  /// パーソナタイプを取得（デフォルト: gentle）
+  String getUserPersonaType() =>
+      _prefs.getString(_keyUserPersonaType) ?? 'gentle';
+
+  /// パーソナタイプを保存
+  Future<void> setUserPersonaType(String personaType) async {
+    await _prefs.setString(_keyUserPersonaType, personaType);
   }
 }

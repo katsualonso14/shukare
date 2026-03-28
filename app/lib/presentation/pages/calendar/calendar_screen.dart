@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../domain/entity/wake_up_status.dart';
+import '../../../domain/entity/wake_up_record.dart';
 import '../../providers/checked_dates_provider.dart';
+import '../../providers/personalized_message_provider.dart';
+import '../../providers/wake_up_records_provider.dart';
 import '../../providers/selected_date_provider.dart';
 import '../settings/settings_screen.dart';
 import 'widgets/date_detail_bottom_sheet.dart';
@@ -22,7 +26,7 @@ class CalendarScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final checkedAsync = ref.watch(checkedDatesProvider);
+    final wakeUpRecordsAsync = ref.watch(wakeUpRecordsProvider);
     final selectedDate = ref.watch(selectedDateProvider);
     final selectedKey = _dateKey(selectedDate);
     final today = _today();
@@ -75,12 +79,14 @@ class CalendarScreen extends ConsumerWidget {
                     child: SizedBox(height: 16),
                   ),
                   SliverToBoxAdapter(
-                    child: checkedAsync.when(
-                      data: (checked) {
-                        final streak = streakCount(selectedDate, checked);
+                    child: wakeUpRecordsAsync.when(
+                      data: (records) {
+                        final record = records[selectedKey];
+                        final streak = _calculateStreak(selectedDate, records);
                         return _StreakCard(
                           date: selectedDate,
                           streak: streak,
+                          status: record?.status,
                         );
                       },
                       loading: () => const SizedBox(height: 100),
@@ -106,15 +112,28 @@ class CalendarScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              child: checkedAsync.when(
-                data: (checked) {
-                  final isChecked = checked.contains(selectedKey);
+              child: wakeUpRecordsAsync.when(
+                data: (records) {
+                  final record = records[selectedKey];
                   return _CheckButton(
                     date: selectedDate,
                     isToday: isToday,
-                    isChecked: isChecked,
-                    onTap: () {
-                      ref.read(checkedDatesProvider.notifier).toggle(selectedKey);
+                    record: record,
+                    onTap: () async {
+                      if (isToday) {
+                        // 今日の場合は起床記録を作成
+                        await ref.read(wakeUpRecordsProvider.notifier).recordWakeUp();
+                      } else {
+                        // 過去の日付の場合は時刻を指定して記録
+                        final recordTime = DateTime(
+                          selectedDate.year,
+                          selectedDate.month,
+                          selectedDate.day,
+                          6, 0, // デフォルトで6:00に記録
+                        );
+                        await ref.read(wakeUpRecordsProvider.notifier)
+                            .recordWakeUp(actualTime: recordTime);
+                      }
                     },
                   );
                 },
@@ -129,23 +148,47 @@ class CalendarScreen extends ConsumerWidget {
   }
 }
 
+/// 連続日数を計算（Achieved か NearMiss のみカウント）
+int _calculateStreak(DateTime fromDate, Map<String, WakeUpRecord> records) {
+  final fromStart = DateTime(fromDate.year, fromDate.month, fromDate.day);
+  final todayStart = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
+  if (fromStart.isAfter(todayStart)) return 0;
+
+  int count = 0;
+  DateTime d = fromStart;
+  
+  while (true) {
+    final key = DateFormat('yyyy-MM-dd').format(d);
+    final record = records[key];
+    
+    // Achieved か NearMiss のみカウント（Resting と Tried は除外）
+    if (record == null ||
+        (record.status != WakeUpStatus.achieved &&
+            record.status != WakeUpStatus.nearMiss)) {
+      break;
+    }
+    
+    count++;
+    d = d.subtract(const Duration(days: 1));
+  }
+  return count;
+}
+
 /// カレンダー下のチェックセクション（連続日数とボタン）
-class _StreakCard extends StatelessWidget {
+class _StreakCard extends ConsumerWidget {
   const _StreakCard({
     required this.date,
     required this.streak,
+    this.status,
   });
 
   final DateTime date;
   final int streak;
-
-  String get _streakText {
-    if (streak >= 1) {
-      return '$streak日続いてる${_streakEmoji(streak)}';
-    } else {
-      return '続きはここから${_streakEmoji(0)}';
-    }
-  }
+  final WakeUpStatus? status;
 
   String _streakEmoji(int streak) {
     if (streak >= 30) return '🌳';
@@ -154,7 +197,18 @@ class _StreakCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final personalizedMessage = ref.watch(personalizedMessageProvider(status));
+    final consecutiveFailures = ref.watch(consecutiveFailureCountProvider);
+    
+    final isAngryMode = consecutiveFailures >= 3;
+    
+    final displayText = status != null || consecutiveFailures >= 1
+        ? personalizedMessage
+        : (streak >= 1
+            ? '$streak日続いてる${_streakEmoji(streak)}'
+            : '続きはここから${_streakEmoji(0)}');
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
@@ -163,14 +217,21 @@ class _StreakCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary.withOpacity(0.15),
-              AppColors.primary.withOpacity(0.08),
-            ],
+            colors: isAngryMode
+                ? [
+                    Colors.red.withOpacity(0.2),
+                    Colors.orange.withOpacity(0.15),
+                  ]
+                : [
+                    AppColors.primary.withOpacity(0.15),
+                    AppColors.primary.withOpacity(0.08),
+                  ],
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: AppColors.primary.withOpacity(0.3),
+            color: isAngryMode
+                ? Colors.red.withOpacity(0.4)
+                : AppColors.primary.withOpacity(0.3),
             width: 1.5,
           ),
         ),
@@ -186,11 +247,11 @@ class _StreakCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              _streakText,
+              displayText,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppColors.textPrimary,
+                    color: isAngryMode ? Colors.red.shade700 : AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
-                    fontSize: 24,
+                    fontSize: isAngryMode ? 18 : 24,
                     letterSpacing: 0.5,
                   ),
               textAlign: TextAlign.center,
@@ -207,22 +268,24 @@ class _CheckButton extends StatelessWidget {
   const _CheckButton({
     required this.date,
     required this.isToday,
-    required this.isChecked,
+    this.record,
     required this.onTap,
   });
 
   final DateTime date;
   final bool isToday;
-  final bool isChecked;
+  final WakeUpRecord? record;
   final VoidCallback onTap;
 
   String get _buttonText {
+    final hasRecord = record != null;
+    
     if (isToday) {
-      return isChecked ? 'また明日' : '今日もできた';
+      return hasRecord ? 'また明日' : '今日もできた';
     } else {
       final month = date.month;
       final day = date.day;
-      return isChecked ? '$month/$day を取り消す' : '$month/$day もできた';
+      return hasRecord ? '$month/$day を取り消す' : '$month/$day もできた';
     }
   }
 

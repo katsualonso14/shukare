@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../domain/entity/mbti.dart';
+import '../../../domain/entity/persona_type.dart';
 import '../../providers/calendar_week_start_provider.dart';
 import '../../providers/checked_dates_provider.dart';
 import '../../providers/notification_provider.dart';
+import '../../providers/user_profile_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -31,6 +34,10 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         children: [
+          _sectionTitle(context, 'パーソナライズ'),
+          const _PersonaTypeTile(),
+          const _MbtiTile(),
+          const SizedBox(height: 24),
           _sectionTitle(context, '通知'),
           const _NotificationSwitch(),
           const _NotificationTimeTile(),
@@ -54,6 +61,369 @@ class SettingsScreen extends ConsumerWidget {
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
+      ),
+    );
+  }
+}
+
+class _PersonaTypeTile extends ConsumerWidget {
+  const _PersonaTypeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(userProfileProvider);
+    return _SettingsCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'アプリの性格',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '優しく励ますか、厳しく背中を押すかを選べます',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _PersonaChip(
+                    label: '😊 優しい',
+                    description: 'やわらかく応援',
+                    selected: profile.personaType == PersonaType.gentle,
+                    onTap: () => ref
+                        .read(userProfileProvider.notifier)
+                        .setPersonaType(PersonaType.gentle),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _PersonaChip(
+                    label: '💪 厳しい',
+                    description: 'しっかり叱咤激励',
+                    selected: profile.personaType == PersonaType.strict,
+                    onTap: () => ref
+                        .read(userProfileProvider.notifier)
+                        .setPersonaType(PersonaType.strict),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PersonaChip extends StatelessWidget {
+  const _PersonaChip({
+    required this.label,
+    required this.description,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String description;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.primary.withOpacity(0.2) : AppColors.surface,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Column(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+                  fontSize: 15,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MbtiTile extends ConsumerWidget {
+  const _MbtiTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(userProfileProvider);
+    return _SettingsCard(
+      child: ListTile(
+        title: const Text(
+          '性格タイプ（MBTI）',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        subtitle: Text(
+          profile.mbti != null
+              ? '${profile.mbti!.code} - ${profile.mbti!.name}'
+              : '未設定',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 13,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: AppColors.textSecondary,
+        ),
+        onTap: () => _showMbtiSelector(context, ref, profile.mbti),
+      ),
+    );
+  }
+
+  Future<void> _showMbtiSelector(
+    BuildContext context,
+    WidgetRef ref,
+    MBTI? currentMbti,
+  ) async {
+    final selected = await showModalBottomSheet<MBTI?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _MbtiSelectorSheet(currentMbti: currentMbti),
+    );
+
+    if (selected != null || selected != currentMbti) {
+      await ref.read(userProfileProvider.notifier).setMbti(selected);
+    }
+  }
+}
+
+class _MbtiSelectorSheet extends StatelessWidget {
+  const _MbtiSelectorSheet({this.currentMbti});
+
+  final MBTI? currentMbti;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.textMuted.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '性格タイプを選択',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'MBTIを選ぶとメッセージがより親しみやすくなります',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildSection(context, 'アナリスト（分析家）', [
+                  MBTI.intj,
+                  MBTI.intp,
+                  MBTI.entj,
+                  MBTI.entp,
+                ]),
+                _buildSection(context, '外交官', [
+                  MBTI.infj,
+                  MBTI.infp,
+                  MBTI.enfj,
+                  MBTI.enfp,
+                ]),
+                _buildSection(context, '番人', [
+                  MBTI.istj,
+                  MBTI.isfj,
+                  MBTI.estj,
+                  MBTI.esfj,
+                ]),
+                _buildSection(context, '探検家', [
+                  MBTI.istp,
+                  MBTI.isfp,
+                  MBTI.estp,
+                  MBTI.esfp,
+                ]),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  child: const Text(
+                    '設定しない',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(BuildContext context, String title, List<MBTI> types) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        ...types.map((mbti) => _MbtiOptionTile(
+              mbti: mbti,
+              isSelected: mbti == currentMbti,
+              onTap: () => Navigator.of(context).pop(mbti),
+            )),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+class _MbtiOptionTile extends StatelessWidget {
+  const _MbtiOptionTile({
+    required this.mbti,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final MBTI mbti;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      color: isSelected
+          ? AppColors.primary.withOpacity(0.15)
+          : AppColors.background,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.5)
+              : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  mbti.code,
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      mbti.name,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      mbti.description,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Icon(
+                  Icons.check_circle,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../domain/entity/wake_up_record.dart';
 import '../../../providers/calendar_week_start_provider.dart';
-import '../../../providers/checked_dates_provider.dart';
 import '../../../providers/selected_date_provider.dart';
+import '../../../providers/wake_up_records_provider.dart';
 import '../check_mark_style.dart';
-import 'date_detail_bottom_sheet.dart';
 import 'day_cell.dart';
 
 class MonthCalendar extends ConsumerWidget {
@@ -16,15 +17,16 @@ class MonthCalendar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final checkedDatesAsync = ref.watch(checkedDatesProvider);
+    final wakeUpRecordsAsync = ref.watch(wakeUpRecordsProvider);
     final weekStartSunday = ref.watch(calendarWeekStartSundayProvider);
     final selectedDate = ref.watch(selectedDateProvider);
-    return checkedDatesAsync.when(
-      data: (checkedSet) => _CalendarBody(
-        checkedDates: checkedSet,
+    return wakeUpRecordsAsync.when(
+      data: (records) => _CalendarBody(
+        wakeUpRecords: records,
         selectedDate: selectedDate,
-        startingDayOfWeek:
-            weekStartSunday ? StartingDayOfWeek.sunday : StartingDayOfWeek.monday,
+        startingDayOfWeek: weekStartSunday
+            ? StartingDayOfWeek.sunday
+            : StartingDayOfWeek.monday,
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('$e')),
@@ -34,12 +36,12 @@ class MonthCalendar extends ConsumerWidget {
 
 class _CalendarBody extends ConsumerStatefulWidget {
   const _CalendarBody({
-    required this.checkedDates,
+    required this.wakeUpRecords,
     required this.selectedDate,
     this.startingDayOfWeek = StartingDayOfWeek.monday,
   });
 
-  final Set<String> checkedDates;
+  final Map<String, WakeUpRecord> wakeUpRecords;
   final DateTime selectedDate;
   final StartingDayOfWeek startingDayOfWeek;
 
@@ -62,7 +64,7 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
     final now = DateTime.now();
     final today = _normalizeDate(now);
     final dayNormalized = _normalizeDate(day);
-    
+
     // 未来の日付はタップ不可
     if (dayNormalized.isAfter(today)) {
       return;
@@ -154,12 +156,12 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
     final isToday = isSameDay(day, now);
     final isFuture = dayNormalized.isAfter(today);
     final key = _dateKey(day);
-    final isChecked = widget.checkedDates.contains(key);
+    final record = widget.wakeUpRecords[key];
     final isSelected = isSameDay(day, widget.selectedDate);
 
     return DayCell(
       date: day,
-      isChecked: isChecked,
+      record: record,
       isCurrentMonth: isCurrentMonth,
       isToday: isToday,
       isSelected: isSelected,
