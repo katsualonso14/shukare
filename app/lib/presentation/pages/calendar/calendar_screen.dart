@@ -120,7 +120,13 @@ class CalendarScreen extends ConsumerWidget {
                     isToday: isToday,
                     record: record,
                     onTap: () async {
-                      if (isToday) {
+                      final hasRecord = record != null;
+                      
+                      if (hasRecord) {
+                        // 記録がある場合は削除（取り消し）
+                        await ref.read(wakeUpRecordsProvider.notifier)
+                            .deleteRecord(selectedDate);
+                      } else if (isToday) {
                         // 今日の場合は起床記録を作成
                         await ref.read(wakeUpRecordsProvider.notifier).recordWakeUp();
                       } else {

@@ -49,6 +49,19 @@ class WakeUpRecordRepositoryImpl implements WakeUpRecordRepository {
   }
 
   @override
+  Future<void> delete(String dateKey) async {
+    final all = await loadAll();
+    all.remove(dateKey);
+    
+    final raw = <String, Map<String, dynamic>>{};
+    all.forEach((key, value) {
+      raw[key] = value.toJson();
+    });
+    
+    await _datasource.setWakeUpRecords(raw);
+  }
+
+  @override
   Future<TargetWakeUpTime> getTargetTime() async {
     final raw = _datasource.getTargetWakeUpTime();
     return TargetWakeUpTime(

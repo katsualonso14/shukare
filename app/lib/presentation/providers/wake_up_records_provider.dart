@@ -63,6 +63,27 @@ class WakeUpRecordsNotifier extends AsyncNotifier<Map<String, WakeUpRecord>> {
     });
   }
 
+  /// 指定した日の記録を削除
+  Future<void> deleteRecord(DateTime date) async {
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final tempRecord = WakeUpRecord(
+      date: normalizedDate,
+      status: WakeUpStatus.achieved,
+      actualWakeUpTime: null,
+    );
+    final dateKey = tempRecord.dateKey;
+
+    final usecase = ref.read(deleteWakeUpRecordUsecaseProvider);
+    await usecase(normalizedDate);
+
+    state = await AsyncValue.guard(() async {
+      final current = state.valueOrNull ?? {};
+      final next = Map<String, WakeUpRecord>.from(current);
+      next.remove(dateKey);
+      return next;
+    });
+  }
+
   /// すべての記録をクリア
   Future<void> clearAll() async {
     state = const AsyncLoading();

@@ -15,6 +15,9 @@ abstract class WakeUpRecordRepository {
   /// すべての記録をクリア
   Future<void> clearAll();
 
+  /// 特定の日の記録を削除
+  Future<void> delete(String dateKey);
+
   /// 目標起床時刻を取得
   Future<TargetWakeUpTime> getTargetTime();
 

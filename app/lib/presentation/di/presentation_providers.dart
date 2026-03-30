@@ -8,6 +8,7 @@ import '../../domain/usecase/record_wake_up_usecase.dart';
 import '../../domain/usecase/toggle_resting_mode_usecase.dart';
 import '../../domain/usecase/get_wake_up_records_usecase.dart';
 import '../../domain/usecase/clear_wake_up_records_usecase.dart';
+import '../../domain/usecase/delete_wake_up_record_usecase.dart';
 import '../../domain/usecase/get_target_wake_up_time_usecase.dart';
 import '../../domain/usecase/set_target_wake_up_time_usecase.dart';
 import '../../infrastructure/di/infrastructure_providers.dart';
@@ -55,6 +56,10 @@ final getWakeUpRecordsUsecaseProvider = Provider<GetWakeUpRecordsUsecase>((ref) 
 
 final clearWakeUpRecordsUsecaseProvider = Provider<ClearWakeUpRecordsUsecase>((ref) {
   return ClearWakeUpRecordsUsecase(ref.watch(wakeUpRecordRepositoryProvider));
+});
+
+final deleteWakeUpRecordUsecaseProvider = Provider<DeleteWakeUpRecordUsecase>((ref) {
+  return DeleteWakeUpRecordUsecase(ref.watch(wakeUpRecordRepositoryProvider));
 });
 
 final getTargetWakeUpTimeUsecaseProvider = Provider<GetTargetWakeUpTimeUsecase>((ref) {
