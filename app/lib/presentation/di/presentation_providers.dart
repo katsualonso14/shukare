@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/service/daily_achievement_service.dart';
 import '../../domain/service/weekly_report_service.dart';
 import '../../domain/usecase/clear_checked_dates_usecase.dart';
 import '../../domain/usecase/get_checked_dates_usecase.dart';
@@ -80,4 +81,11 @@ final setTargetWakeUpTimeUsecaseProvider = Provider<SetTargetWakeUpTimeUsecase>(
 
 final weeklyReportServiceProvider = Provider<WeeklyReportService>((ref) {
   return const WeeklyReportService();
+});
+
+// --- Daily Achievement Service Provider ---
+
+final dailyAchievementServiceProvider =
+    Provider<DailyAchievementService>((ref) {
+  return const DailyAchievementService();
 });

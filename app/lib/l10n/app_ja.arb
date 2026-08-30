@@ -93,5 +93,35 @@
   "optionSuccess": "できた",
   "optionRested": "今日はゆっくり休めた日",
   "optionAdjusted": "調整日",
-  "tapAgainToDelete": "もう一度タップで削除"
+  "tapAgainToDelete": "もう一度タップで削除",
+
+  "achievementStreak": "{count}日連続",
+  "@achievementStreak": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "achievementStart": "はじめの1日",
+  "achievementMilestone": "{count}日達成 🎉",
+  "@achievementMilestone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "achievementWokeAt": "起床",
+  "achievementEarlyBy": "目標より{minutes}分早い",
+  "@achievementEarlyBy": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "achievementLateBy": "目標より{minutes}分遅い",
+  "@achievementLateBy": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "achievementOnTarget": "目標ぴったり",
+  "achievementThisMonth": "今月",
+  "achievementClose": "今日もいい朝"
 }

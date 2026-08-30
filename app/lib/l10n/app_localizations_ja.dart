@@ -195,4 +195,39 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tapAgainToDelete => 'もう一度タップで削除';
+
+  @override
+  String achievementStreak(int count) {
+    return '$count日連続';
+  }
+
+  @override
+  String get achievementStart => 'はじめの1日';
+
+  @override
+  String achievementMilestone(int count) {
+    return '$count日達成 🎉';
+  }
+
+  @override
+  String get achievementWokeAt => '起床';
+
+  @override
+  String achievementEarlyBy(int minutes) {
+    return '目標より$minutes分早い';
+  }
+
+  @override
+  String achievementLateBy(int minutes) {
+    return '目標より$minutes分遅い';
+  }
+
+  @override
+  String get achievementOnTarget => '目標ぴったり';
+
+  @override
+  String get achievementThisMonth => '今月';
+
+  @override
+  String get achievementClose => '今日もいい朝';
 }

@@ -457,6 +457,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap again to remove'**
   String get tapAgainToDelete;
+
+  /// No description provided for @achievementStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}-day streak'**
+  String achievementStreak(int count);
+
+  /// No description provided for @achievementStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Day one'**
+  String get achievementStart;
+
+  /// No description provided for @achievementMilestone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days 🎉'**
+  String achievementMilestone(int count);
+
+  /// No description provided for @achievementWokeAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Woke up'**
+  String get achievementWokeAt;
+
+  /// No description provided for @achievementEarlyBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min before target'**
+  String achievementEarlyBy(int minutes);
+
+  /// No description provided for @achievementLateBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min after target'**
+  String achievementLateBy(int minutes);
+
+  /// No description provided for @achievementOnTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Right on target'**
+  String get achievementOnTarget;
+
+  /// No description provided for @achievementThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get achievementThisMonth;
+
+  /// No description provided for @achievementClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get achievementClose;
 }
 
 class _AppLocalizationsDelegate

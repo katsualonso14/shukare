@@ -20,4 +20,13 @@ class AnalyticsService {
 
   Future<void> logMonthlyReportViewed() =>
       _analytics.logEvent(name: 'monthly_report_viewed');
+
+  Future<void> logDailyAchievementViewed({
+    required int streak,
+    required bool isMilestone,
+  }) =>
+      _analytics.logEvent(
+        name: 'daily_achievement_viewed',
+        parameters: {'streak': streak, 'is_milestone': isMilestone ? 1 : 0},
+      );
 }

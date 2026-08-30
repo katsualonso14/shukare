@@ -198,4 +198,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tapAgainToDelete => 'Tap again to remove';
+
+  @override
+  String achievementStreak(int count) {
+    return '$count-day streak';
+  }
+
+  @override
+  String get achievementStart => 'Day one';
+
+  @override
+  String achievementMilestone(int count) {
+    return '$count days 🎉';
+  }
+
+  @override
+  String get achievementWokeAt => 'Woke up';
+
+  @override
+  String achievementEarlyBy(int minutes) {
+    return '$minutes min before target';
+  }
+
+  @override
+  String achievementLateBy(int minutes) {
+    return '$minutes min after target';
+  }
+
+  @override
+  String get achievementOnTarget => 'Right on target';
+
+  @override
+  String get achievementThisMonth => 'This month';
+
+  @override
+  String get achievementClose => 'Good morning';
 }

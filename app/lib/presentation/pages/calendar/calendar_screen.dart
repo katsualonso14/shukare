@@ -6,12 +6,14 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../infrastructure/di/infrastructure_providers.dart';
 import '../../../domain/entity/wake_up_record.dart';
 import '../../../domain/entity/wake_up_status.dart';
+import '../../providers/daily_achievement_provider.dart';
 import '../../providers/personalized_message_provider.dart';
 import '../../providers/wake_up_records_provider.dart';
 import '../../providers/weekly_report_provider.dart';
 import '../../providers/selected_date_provider.dart';
 import '../../providers/user_profile_provider.dart';
 import '../settings/settings_screen.dart';
+import 'widgets/daily_achievement_dialog.dart';
 import 'widgets/date_detail_bottom_sheet.dart';
 import 'widgets/month_calendar.dart';
 import 'widgets/monthly_report_dialog.dart';
@@ -47,9 +49,45 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
+    // 週次・月次が出る日は日次を出さない。
+    // 朝に2〜3枚重なると「達成の報酬」ではなく「閉じる作業」になるので、
+    // 頻度が低く情報量の多い方（週次・月次）に譲る。
+    final hasWeekly = await ref.read(weeklyReportProvider.future) != null;
+    final hasMonthly = await ref.read(monthlyReportProvider.future) != null;
+    if (!mounted) return;
+
+    if (!hasWeekly && !hasMonthly) {
+      await _checkDailyAchievement();
+      if (!mounted) return;
+    }
+
     await _checkWeeklyReport();
     if (!mounted) return;
     await _checkMonthlyReport();
+  }
+
+  Future<void> _checkDailyAchievement() async {
+    final achievement = await ref.read(dailyAchievementProvider.future);
+    if (achievement == null) return;
+    if (!mounted) return;
+
+    final profile = ref.read(userProfileProvider);
+    final message =
+        ref.read(personalizedMessageProvider(WakeUpStatus.success));
+
+    await ref.read(analyticsServiceProvider).logDailyAchievementViewed(
+          streak: achievement.streak,
+          isMilestone: achievement.isMilestone,
+        );
+    if (!mounted) return;
+    await DailyAchievementDialog.show(
+      context: context,
+      achievement: achievement,
+      personaType: profile.personaType,
+      message: message,
+    );
+
+    await ref.read(dailyAchievementNotifierProvider.notifier).markAsShown();
   }
 
   Future<void> _checkWeeklyReport() async {

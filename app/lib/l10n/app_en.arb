@@ -93,5 +93,35 @@
   "optionSuccess": "Did it",
   "optionRested": "Rest day",
   "optionAdjusted": "Adjustment day",
-  "tapAgainToDelete": "Tap again to remove"
+  "tapAgainToDelete": "Tap again to remove",
+
+  "achievementStreak": "{count}-day streak",
+  "@achievementStreak": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "achievementStart": "Day one",
+  "achievementMilestone": "{count} days 🎉",
+  "@achievementMilestone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "achievementWokeAt": "Woke up",
+  "achievementEarlyBy": "{minutes} min before target",
+  "@achievementEarlyBy": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "achievementLateBy": "{minutes} min after target",
+  "@achievementLateBy": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "achievementOnTarget": "Right on target",
+  "achievementThisMonth": "This month",
+  "achievementClose": "Good morning"
 }

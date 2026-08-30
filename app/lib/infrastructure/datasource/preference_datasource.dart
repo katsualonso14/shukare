@@ -19,6 +19,8 @@ class PreferenceDatasource {
   static const String _keyUserPersonaType = 'user_persona_type';
   static const String _keyWeeklyReportLastShown = 'weekly_report_last_shown';
   static const String _keyMonthlyReportLastShown = 'monthly_report_last_shown';
+  static const String _keyDailyAchievementLastShown =
+      'daily_achievement_last_shown';
 
   // --- Checked dates ---
   Future<Set<String>> getCheckedDates() async {
@@ -173,5 +175,22 @@ class PreferenceDatasource {
   Future<void> setMonthlyReportLastShown(DateTime date) async {
     await _prefs.setString(
         _keyMonthlyReportLastShown, date.toIso8601String());
+  }
+
+  // --- Daily Achievement（今日の達成モーダルを出した日） ---
+
+  DateTime? getDailyAchievementLastShown() {
+    final raw = _prefs.getString(_keyDailyAchievementLastShown);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> setDailyAchievementLastShown(DateTime date) async {
+    await _prefs.setString(
+        _keyDailyAchievementLastShown, date.toIso8601String());
   }
 }
