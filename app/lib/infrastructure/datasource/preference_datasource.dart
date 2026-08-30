@@ -17,6 +17,8 @@ class PreferenceDatasource {
   static const String _keyTargetWakeUpMinute = 'target_wake_up_minute';
   static const String _keyUserMbti = 'user_mbti';
   static const String _keyUserPersonaType = 'user_persona_type';
+  static const String _keyWeeklyReportLastShown = 'weekly_report_last_shown';
+  static const String _keyMonthlyReportLastShown = 'monthly_report_last_shown';
 
   // --- Checked dates ---
   Future<Set<String>> getCheckedDates() async {
@@ -136,5 +138,40 @@ class PreferenceDatasource {
   /// パーソナタイプを保存
   Future<void> setUserPersonaType(String personaType) async {
     await _prefs.setString(_keyUserPersonaType, personaType);
+  }
+
+  // --- Weekly Report (ウィークリーレポート表示済みフラグ) ---
+
+  /// ウィークリーレポートの最終表示日を取得
+  DateTime? getWeeklyReportLastShown() {
+    final raw = _prefs.getString(_keyWeeklyReportLastShown);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// ウィークリーレポートの最終表示日を保存
+  Future<void> setWeeklyReportLastShown(DateTime date) async {
+    await _prefs.setString(_keyWeeklyReportLastShown, date.toIso8601String());
+  }
+
+  // --- Monthly Report ---
+
+  DateTime? getMonthlyReportLastShown() {
+    final raw = _prefs.getString(_keyMonthlyReportLastShown);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> setMonthlyReportLastShown(DateTime date) async {
+    await _prefs.setString(
+        _keyMonthlyReportLastShown, date.toIso8601String());
   }
 }

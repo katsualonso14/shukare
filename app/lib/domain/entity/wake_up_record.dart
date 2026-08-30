@@ -21,8 +21,7 @@ class WakeUpRecord {
   factory WakeUpRecord.fromJson(Map<String, dynamic> json) {
     return WakeUpRecord(
       date: DateTime.parse(json['date'] as String),
-      status: WakeUpStatus.fromJson(json['status'] as String?) ??
-          WakeUpStatus.tried,
+      status: WakeUpStatus.fromJson(json['status'] as String?),
       actualWakeUpTime: json['actualWakeUpTime'] != null
           ? DateTime.parse(json['actualWakeUpTime'] as String)
           : null,

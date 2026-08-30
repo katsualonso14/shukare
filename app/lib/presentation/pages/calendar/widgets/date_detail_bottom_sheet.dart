@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile/l10n/app_localizations.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../providers/checked_dates_provider.dart';
+import '../../../../domain/entity/wake_up_status.dart';
+import '../../../../infrastructure/di/infrastructure_providers.dart';
+import '../../../providers/wake_up_records_provider.dart';
 
-/// 指定日付の「X日続いてる🌱」を表示するボトムシート
-void showDateDetailBottomSheet({
+/// 日付をタップしたときに表示するボトムシート（記録編集専用）
+/// 当日以前の日付のみ表示される（未来日は month_calendar 側で弾く）
+Future<void> showDateDetailBottomSheet({
   required BuildContext context,
-  required WidgetRef ref,
   required DateTime date,
 }) {
-  showModalBottomSheet<void>(
+  return showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
@@ -24,35 +27,6 @@ void showDateDetailBottomSheet({
   );
 }
 
-/// その日付を含めて遡った連続チェック日数（未来の日は数えない）
-int streakCount(DateTime fromDate, Set<String> checkedDates) {
-  final fromStart = DateTime(fromDate.year, fromDate.month, fromDate.day);
-  final todayStart = DateTime(
-    DateTime.now().year,
-    DateTime.now().month,
-    DateTime.now().day,
-  );
-  if (fromStart.isAfter(todayStart)) return 0;
-
-  int count = 0;
-  DateTime d = fromStart;
-  // タップした日から過去に向かって連続チェック日数を数える
-  while (true) {
-    final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-    if (!checkedDates.contains(key)) break;
-    count++;
-    d = d.subtract(const Duration(days: 1));
-  }
-  return count;
-}
-
-/// 連続日数に応じた絵文字（1日→小さい芽、2日以上→葉っぱ、30日→木）
-String streakEmoji(int streak) {
-  if (streak >= 30) return '🌳';
-  if (streak >= 2) return '🌿';
-  return '🌱'; // 1日 or 0日（続きはここから）
-}
-
 class _DateDetailSheet extends ConsumerWidget {
   const _DateDetailSheet({required this.date});
 
@@ -60,103 +34,211 @@ class _DateDetailSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final checkedAsync = ref.watch(checkedDatesProvider);
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).languageCode;
+    final wakeUpRecordsAsync = ref.watch(wakeUpRecordsProvider);
     final dateKey = DateFormat('yyyy-MM-dd').format(date);
-    final today = DateTime.now();
-    final normalizedToday = DateTime(today.year, today.month, today.day);
-    final normalizedDate = DateTime(date.year, date.month, date.day);
-    final isToday = normalizedDate == normalizedToday;
+    final dateFormat = locale == 'ja' ? 'M月d日（E）' : 'EEE, MMM d';
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: checkedAsync.when(
-        data: (checkedDates) {
-          final streak = streakCount(date, checkedDates);
-          final isChecked = checkedDates.contains(dateKey);
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.textMuted,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            DateFormat(dateFormat, locale).format(date),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+          ),
+          const SizedBox(height: 20),
+          wakeUpRecordsAsync.when(
+            data: (records) => _OptionList(
+              date: date,
+              currentStatus: records[dateKey]?.status,
+              l10n: l10n,
+            ),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text('$e', style: const TextStyle(color: AppColors.textSecondary)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textMuted,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                DateFormat('M月d日', 'ja').format(date),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                streak >= 1
-                    ? '$streak日続いてる${streakEmoji(streak)}'
-                    : '続きはここから${streakEmoji(0)}',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    ref.read(checkedDatesProvider.notifier).toggle(dateKey);
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.surface,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    _getButtonText(isToday, isChecked, date),
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+class _OptionList extends ConsumerWidget {
+  const _OptionList({
+    required this.date,
+    required this.currentStatus,
+    required this.l10n,
+  });
+
+  final DateTime date;
+  final WakeUpStatus? currentStatus;
+  final AppLocalizations l10n;
+
+  Future<void> _onTap(WidgetRef ref, WakeUpStatus tapped, BuildContext context) async {
+    final analytics = ref.read(analyticsServiceProvider);
+    if (currentStatus == tapped) {
+      await ref.read(wakeUpRecordsProvider.notifier).deleteRecord(date);
+      await analytics.logWakeUpDeleted();
+    } else {
+      await ref.read(wakeUpRecordsProvider.notifier).recordWithStatus(
+            date: date,
+            status: tapped,
           );
-        },
-        loading: () => const Padding(
-          padding: EdgeInsets.all(24),
-          child: Center(child: CircularProgressIndicator()),
+      await analytics.logWakeUpRecorded(tapped.name);
+    }
+    if (context.mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      children: [
+        _OptionTile(
+          leading: _GreenDot(),
+          label: l10n.optionSuccess,
+          deleteHint: l10n.tapAgainToDelete,
+          isSelected: currentStatus == WakeUpStatus.success,
+          selectedColor: AppColors.primary,
+          onTap: () => _onTap(ref, WakeUpStatus.success, context),
         ),
-        error: (e, _) => Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text('$e',
-              style: const TextStyle(color: AppColors.textSecondary)),
+        const SizedBox(height: 10),
+        _OptionTile(
+          leading: const Text('🌙', style: TextStyle(fontSize: 20)),
+          label: l10n.optionRested,
+          deleteHint: l10n.tapAgainToDelete,
+          isSelected: currentStatus == WakeUpStatus.rested,
+          selectedColor: const Color(0xFF9BB5C4),
+          onTap: () => _onTap(ref, WakeUpStatus.rested, context),
+        ),
+        const SizedBox(height: 10),
+        _OptionTile(
+          leading: const Text('☁️', style: TextStyle(fontSize: 20)),
+          label: l10n.optionAdjusted,
+          deleteHint: l10n.tapAgainToDelete,
+          isSelected: currentStatus == WakeUpStatus.adjusted,
+          selectedColor: AppColors.warmGray,
+          onTap: () => _onTap(ref, WakeUpStatus.adjusted, context),
+        ),
+      ],
+    );
+  }
+}
+
+class _GreenDot extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: const BoxDecoration(
+        color: AppColors.dayCheckedCircle,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: const BoxDecoration(
+          color: AppColors.dayCheckedCircleInner,
+          shape: BoxShape.circle,
         ),
       ),
     );
   }
+}
 
-  String _getButtonText(bool isToday, bool isChecked, DateTime date) {
-    if (isToday) {
-      return isChecked ? 'また明日' : '今日もできた';
-    } else {
-      final month = date.month;
-      final day = date.day;
-      return isChecked ? '$month/$day を取り消す' : '$month/$day もできた';
-    }
+class _OptionTile extends StatelessWidget {
+  const _OptionTile({
+    required this.leading,
+    required this.label,
+    required this.deleteHint,
+    required this.isSelected,
+    required this.selectedColor,
+    required this.onTap,
+  });
+
+  final Widget leading;
+  final String label;
+  final String deleteHint;
+  final bool isSelected;
+  final Color selectedColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? selectedColor.withValues(alpha: 0.12) : AppColors.background,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? selectedColor.withValues(alpha: 0.5)
+                : AppColors.textMuted.withValues(alpha: 0.2),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            leading,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? selectedColor : AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      deleteHint,
+                      style: TextStyle(
+                        color: selectedColor.withValues(alpha: 0.6),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (isSelected) Icon(Icons.check_rounded, color: selectedColor, size: 20),
+          ],
+        ),
+      ),
+    );
   }
 }

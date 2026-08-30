@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:mobile/l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
-import 'pages/calendar/calendar_screen.dart';
+import 'pages/main/main_screen.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -11,7 +13,17 @@ class App extends StatelessWidget {
       title: 'shukare',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const CalendarScreen(),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ja'),
+      ],
+      home: const MainScreen(),
     );
   }
 }

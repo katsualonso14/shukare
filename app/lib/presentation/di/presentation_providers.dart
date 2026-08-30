@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/service/weekly_report_service.dart';
 import '../../domain/usecase/clear_checked_dates_usecase.dart';
 import '../../domain/usecase/get_checked_dates_usecase.dart';
 import '../../domain/usecase/get_notification_settings_usecase.dart';
@@ -9,6 +10,7 @@ import '../../domain/usecase/toggle_resting_mode_usecase.dart';
 import '../../domain/usecase/get_wake_up_records_usecase.dart';
 import '../../domain/usecase/clear_wake_up_records_usecase.dart';
 import '../../domain/usecase/delete_wake_up_record_usecase.dart';
+import '../../domain/usecase/auto_evaluate_wake_up_usecase.dart';
 import '../../domain/usecase/get_target_wake_up_time_usecase.dart';
 import '../../domain/usecase/set_target_wake_up_time_usecase.dart';
 import '../../infrastructure/di/infrastructure_providers.dart';
@@ -62,10 +64,20 @@ final deleteWakeUpRecordUsecaseProvider = Provider<DeleteWakeUpRecordUsecase>((r
   return DeleteWakeUpRecordUsecase(ref.watch(wakeUpRecordRepositoryProvider));
 });
 
+final autoEvaluateWakeUpUsecaseProvider = Provider<AutoEvaluateWakeUpUsecase>((ref) {
+  return AutoEvaluateWakeUpUsecase(ref.watch(wakeUpRecordRepositoryProvider));
+});
+
 final getTargetWakeUpTimeUsecaseProvider = Provider<GetTargetWakeUpTimeUsecase>((ref) {
   return GetTargetWakeUpTimeUsecase(ref.watch(wakeUpRecordRepositoryProvider));
 });
 
 final setTargetWakeUpTimeUsecaseProvider = Provider<SetTargetWakeUpTimeUsecase>((ref) {
   return SetTargetWakeUpTimeUsecase(ref.watch(wakeUpRecordRepositoryProvider));
+});
+
+// --- Weekly Report Service Provider ---
+
+final weeklyReportServiceProvider = Provider<WeeklyReportService>((ref) {
+  return const WeeklyReportService();
 });

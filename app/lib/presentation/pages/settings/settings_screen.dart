@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../domain/entity/mbti.dart';
 import '../../../domain/entity/persona_type.dart';
 import '../../providers/calendar_week_start_provider.dart';
 import '../../providers/checked_dates_provider.dart';
 import '../../providers/notification_provider.dart';
+import '../../providers/target_wake_up_time_provider.dart';
 import '../../providers/user_profile_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -13,6 +15,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -23,7 +26,7 @@ class SettingsScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          '設定',
+          l10n.settings,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
@@ -34,18 +37,21 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         children: [
-          _sectionTitle(context, 'パーソナライズ'),
+          _sectionTitle(context, l10n.sectionGoal),
+          const _TargetWakeUpTimeTile(),
+          const SizedBox(height: 24),
+          _sectionTitle(context, l10n.sectionPersonalize),
           const _PersonaTypeTile(),
           const _MbtiTile(),
           const SizedBox(height: 24),
-          _sectionTitle(context, '通知'),
+          _sectionTitle(context, l10n.sectionNotification),
           const _NotificationSwitch(),
           const _NotificationTimeTile(),
           const SizedBox(height: 24),
-          _sectionTitle(context, 'カレンダー'),
+          _sectionTitle(context, l10n.sectionCalendar),
           const _CalendarWeekStartTile(),
           const SizedBox(height: 24),
-          _sectionTitle(context, 'データ'),
+          _sectionTitle(context, l10n.sectionData),
           const _ResetDataTile(),
         ],
       ),
@@ -66,11 +72,161 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
+class _TargetWakeUpTimeTile extends ConsumerWidget {
+  const _TargetWakeUpTimeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final targetTimeAsync = ref.watch(targetWakeUpTimeProvider);
+    return targetTimeAsync.when(
+      data: (targetTime) => _SettingsCard(
+        child: ListTile(
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.alarm_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
+          ),
+          title: Text(
+            l10n.targetWakeUpTime,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          subtitle: Text(
+            l10n.targetWakeUpTimeSubtitle,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              targetTime.toDisplayString(),
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+          onTap: () => _pickTime(context, ref, targetTime.hour, targetTime.minute),
+        ),
+      ),
+      loading: () => _SettingsCard(
+        child: ListTile(
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.alarm_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
+          ),
+          title: Text(
+            l10n.targetWakeUpTime,
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+          ),
+          trailing: const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (_, __) => _SettingsCard(
+        child: ListTile(
+          leading: const Icon(Icons.error_outline, color: Colors.red),
+          title: Text(l10n.loadError),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickTime(
+    BuildContext context,
+    WidgetRef ref,
+    int initialHour,
+    int initialMinute,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: initialHour, minute: initialMinute),
+      helpText: l10n.wakeUpTimeHelpText,
+      cancelText: l10n.cancel,
+      confirmText: l10n.confirm,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: AppColors.primary,
+                  surface: AppColors.surface,
+                ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: AppColors.surface,
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              dayPeriodShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+            child: child!,
+          ),
+        );
+      },
+    );
+    if (time != null && context.mounted) {
+      await ref.read(targetWakeUpTimeProvider.notifier).setTargetWakeUpTime(
+            time.hour,
+            time.minute,
+          );
+      if (context.mounted) {
+        final timeStr =
+            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.wakeUpTimeSet(timeStr)),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+}
+
 class _PersonaTypeTile extends ConsumerWidget {
   const _PersonaTypeTile();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final profile = ref.watch(userProfileProvider);
     return _SettingsCard(
       child: Padding(
@@ -78,9 +234,9 @@ class _PersonaTypeTile extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'アプリの性格',
-              style: TextStyle(
+            Text(
+              l10n.appPersonality,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -88,8 +244,8 @@ class _PersonaTypeTile extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '優しく励ますか、厳しく背中を押すかを選べます',
-              style: TextStyle(
+              l10n.appPersonalitySubtitle,
+              style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
               ),
@@ -99,8 +255,8 @@ class _PersonaTypeTile extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _PersonaChip(
-                    label: '😊 優しい',
-                    description: 'やわらかく応援',
+                    label: l10n.personaGentle,
+                    description: l10n.personaGentleDesc,
                     selected: profile.personaType == PersonaType.gentle,
                     onTap: () => ref
                         .read(userProfileProvider.notifier)
@@ -110,8 +266,8 @@ class _PersonaTypeTile extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _PersonaChip(
-                    label: '💪 厳しい',
-                    description: 'しっかり叱咤激励',
+                    label: l10n.personaStrict,
+                    description: l10n.personaStrictDesc,
                     selected: profile.personaType == PersonaType.strict,
                     onTap: () => ref
                         .read(userProfileProvider.notifier)
@@ -143,7 +299,7 @@ class _PersonaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.primary.withOpacity(0.2) : AppColors.surface,
+      color: selected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -163,7 +319,7 @@ class _PersonaChip extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 description,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 11,
                 ),
@@ -181,12 +337,13 @@ class _MbtiTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final profile = ref.watch(userProfileProvider);
     return _SettingsCard(
       child: ListTile(
-        title: const Text(
-          '性格タイプ（MBTI）',
-          style: TextStyle(
+        title: Text(
+          l10n.mbtiType,
+          style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w400,
@@ -194,9 +351,9 @@ class _MbtiTile extends ConsumerWidget {
         ),
         subtitle: Text(
           profile.mbti != null
-              ? '${profile.mbti!.code} - ${profile.mbti!.name}'
-              : '未設定',
-          style: TextStyle(
+              ? '${profile.mbti!.code} - ${profile.mbti!.localizedName(Localizations.localeOf(context).languageCode)}'
+              : l10n.mbtiNotSet,
+          style: const TextStyle(
             color: AppColors.textSecondary,
             fontSize: 13,
           ),
@@ -235,6 +392,7 @@ class _MbtiSelectorSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
       decoration: const BoxDecoration(
@@ -248,13 +406,13 @@ class _MbtiSelectorSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textMuted.withOpacity(0.3),
+              color: AppColors.textMuted.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 16),
           Text(
-            '性格タイプを選択',
+            l10n.selectMbtiTitle,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
@@ -262,8 +420,8 @@ class _MbtiSelectorSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'MBTIを選ぶとメッセージがより親しみやすくなります',
-            style: TextStyle(
+            l10n.mbtiSelectSubtitle,
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
             ),
@@ -273,25 +431,25 @@ class _MbtiSelectorSheet extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildSection(context, 'アナリスト（分析家）', [
+                _buildSection(context, l10n.mbtiGroupAnalyst, [
                   MBTI.intj,
                   MBTI.intp,
                   MBTI.entj,
                   MBTI.entp,
                 ]),
-                _buildSection(context, '外交官', [
+                _buildSection(context, l10n.mbtiGroupDiplomat, [
                   MBTI.infj,
                   MBTI.infp,
                   MBTI.enfj,
                   MBTI.enfp,
                 ]),
-                _buildSection(context, '番人', [
+                _buildSection(context, l10n.mbtiGroupSentinel, [
                   MBTI.istj,
                   MBTI.isfj,
                   MBTI.estj,
                   MBTI.esfj,
                 ]),
-                _buildSection(context, '探検家', [
+                _buildSection(context, l10n.mbtiGroupExplorer, [
                   MBTI.istp,
                   MBTI.isfp,
                   MBTI.estp,
@@ -300,9 +458,9 @@ class _MbtiSelectorSheet extends StatelessWidget {
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(null),
-                  child: const Text(
-                    '設定しない',
-                    style: TextStyle(color: AppColors.textSecondary),
+                  child: Text(
+                    l10n.mbtiSkip,
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -322,7 +480,7 @@ class _MbtiSelectorSheet extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -356,14 +514,14 @@ class _MbtiOptionTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: isSelected
-          ? AppColors.primary.withOpacity(0.15)
+          ? AppColors.primary.withValues(alpha: 0.15)
           : AppColors.background,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.5)
+              ? AppColors.primary.withValues(alpha: 0.5)
               : Colors.transparent,
           width: 1.5,
         ),
@@ -379,13 +537,13 @@ class _MbtiOptionTile extends StatelessWidget {
                 width: 48,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   mbti.code,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -398,16 +556,16 @@ class _MbtiOptionTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      mbti.name,
-                      style: TextStyle(
+                      mbti.localizedName(Localizations.localeOf(context).languageCode),
+                      style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
-                      mbti.description,
-                      style: TextStyle(
+                      mbti.localizedDescription(Localizations.localeOf(context).languageCode),
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -416,7 +574,7 @@ class _MbtiOptionTile extends StatelessWidget {
                 ),
               ),
               if (isSelected)
-                Icon(
+                const Icon(
                   Icons.check_circle,
                   color: AppColors.primary,
                   size: 20,
@@ -434,6 +592,7 @@ class _NotificationSwitch extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final notificationAsync = ref.watch(notificationProvider);
     return notificationAsync.when(
       data: (settings) => _SettingsCard(
@@ -441,29 +600,32 @@ class _NotificationSwitch extends ConsumerWidget {
           value: settings.enabled,
           onChanged: (value) =>
               ref.read(notificationProvider.notifier).setEnabled(value),
-          title: const Text(
-            '通知をする',
-            style: TextStyle(
+          title: Text(
+            l10n.notificationEnable,
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w400,
             ),
           ),
-          activeColor: AppColors.primary,
+          activeThumbColor: AppColors.primary,
         ),
       ),
-      loading: () => const _SettingsCard(
+      loading: () => _SettingsCard(
         child: ListTile(
-          title: Text('通知をする', style: TextStyle(color: AppColors.textSecondary)),
-          trailing: SizedBox(
+          title: Text(
+            l10n.notificationEnable,
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+          trailing: const SizedBox(
             width: 24,
             height: 24,
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
       ),
-      error: (_, __) => const _SettingsCard(
-        child: ListTile(title: Text('読み込みに失敗しました')),
+      error: (_, __) => _SettingsCard(
+        child: ListTile(title: Text(l10n.loadError)),
       ),
     );
   }
@@ -474,13 +636,14 @@ class _NotificationTimeTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final notificationAsync = ref.watch(notificationProvider);
     return notificationAsync.when(
       data: (settings) => _SettingsCard(
         child: ListTile(
-          title: const Text(
-            '通知時刻',
-            style: TextStyle(
+          title: Text(
+            l10n.notificationTime,
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w400,
@@ -532,6 +695,7 @@ class _CalendarWeekStartTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final weekStartSunday = ref.watch(calendarWeekStartSundayProvider);
     return _SettingsCard(
       child: Padding(
@@ -539,9 +703,9 @@ class _CalendarWeekStartTile extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '週の始まり',
-              style: TextStyle(
+            Text(
+              l10n.weekStart,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -552,7 +716,7 @@ class _CalendarWeekStartTile extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _WeekStartChip(
-                    label: '日曜日',
+                    label: l10n.sunday,
                     selected: weekStartSunday,
                     onTap: () => ref
                         .read(calendarWeekStartSundayProvider.notifier)
@@ -562,7 +726,7 @@ class _CalendarWeekStartTile extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _WeekStartChip(
-                    label: '月曜日',
+                    label: l10n.monday,
                     selected: !weekStartSunday,
                     onTap: () => ref
                         .read(calendarWeekStartSundayProvider.notifier)
@@ -592,7 +756,7 @@ class _WeekStartChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.primary.withOpacity(0.2) : AppColors.surface,
+      color: selected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -619,11 +783,12 @@ class _ResetDataTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return _SettingsCard(
       child: ListTile(
-        title: const Text(
-          'データをすべてリセット',
-          style: TextStyle(
+        title: Text(
+          l10n.resetAllData,
+          style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w400,
@@ -640,30 +805,32 @@ class _ResetDataTile extends ConsumerWidget {
   }
 
   Future<void> _showResetConfirmDialog(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('データのリセット'),
-        content: const Text(
-          'チェックした日付データをすべて削除します。\nこの操作は取り消せません。よろしいですか？',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('キャンセル', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('リセット', style: TextStyle(color: AppColors.primary)),
-          ),
-        ],
-      ),
+      builder: (context) {
+        final dl = AppLocalizations.of(context)!;
+        return AlertDialog(
+          title: Text(dl.resetDataTitle),
+          content: Text(dl.resetDataContent),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(dl.cancel, style: const TextStyle(color: AppColors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(dl.reset, style: const TextStyle(color: AppColors.primary)),
+            ),
+          ],
+        );
+      },
     );
     if (ok == true && context.mounted) {
       await ref.read(checkedDatesProvider.notifier).clearAll();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('データをリセットしました')),
+          SnackBar(content: Text(l10n.resetDone)),
         );
         Navigator.of(context).pop();
       }

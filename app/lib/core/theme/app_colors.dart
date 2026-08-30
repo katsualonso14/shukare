@@ -21,6 +21,7 @@ class AppColors {
   
   // メインアクセントカラー（UI全体で使用）
   static const Color primary = sage;
+  static const Color secondary = Color(0xFFB8A0C4); // 紫系（nearMiss用）
 
   // チェック表示用（優しい緑＝テーマ色）
   static const Color checkGreen = Color(0xFF9CAF88);       // セージ（メイン）

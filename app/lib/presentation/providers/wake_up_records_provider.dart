@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entity/wake_up_record.dart';
 import '../../domain/entity/wake_up_status.dart';
+import '../../infrastructure/di/infrastructure_providers.dart';
 import '../di/presentation_providers.dart';
 
 /// 起床記録を管理するProvider
@@ -13,8 +14,15 @@ final wakeUpRecordsProvider =
 class WakeUpRecordsNotifier extends AsyncNotifier<Map<String, WakeUpRecord>> {
   @override
   Future<Map<String, WakeUpRecord>> build() async {
-    final usecase = ref.read(getWakeUpRecordsUsecaseProvider);
-    return usecase();
+    final records =
+        await ref.read(getWakeUpRecordsUsecaseProvider)();
+    // 起動時に今日の自動評価を行い、初期状態に含める（race condition を回避）
+    final newRecord =
+        await ref.read(autoEvaluateWakeUpUsecaseProvider)();
+    if (newRecord != null) {
+      return {...records, newRecord.dateKey: newRecord};
+    }
+    return records;
   }
 
   /// 起床を記録する（現在時刻で自動判定）
@@ -33,12 +41,12 @@ class WakeUpRecordsNotifier extends AsyncNotifier<Map<String, WakeUpRecord>> {
     return record;
   }
 
-  /// 「今日は休む」モードを切り替え
+  /// 記録の切り替え
   Future<void> toggleRestingMode(DateTime date) async {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final tempRecord = WakeUpRecord(
       date: normalizedDate,
-      status: WakeUpStatus.resting,
+      status: WakeUpStatus.none,
       actualWakeUpTime: null,
     );
     final dateKey = tempRecord.dateKey;
@@ -63,12 +71,33 @@ class WakeUpRecordsNotifier extends AsyncNotifier<Map<String, WakeUpRecord>> {
     });
   }
 
+  /// 過去の日付にステータスを指定して記録
+  Future<void> recordWithStatus({
+    required DateTime date,
+    required WakeUpStatus status,
+  }) async {
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final record = WakeUpRecord(
+      date: normalizedDate,
+      status: status,
+      actualWakeUpTime: null,
+    );
+
+    final repository = ref.read(wakeUpRecordRepositoryProvider);
+    await repository.save(record);
+
+    state = await AsyncValue.guard(() async {
+      final current = state.valueOrNull ?? {};
+      return {...current, record.dateKey: record};
+    });
+  }
+
   /// 指定した日の記録を削除
   Future<void> deleteRecord(DateTime date) async {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final tempRecord = WakeUpRecord(
       date: normalizedDate,
-      status: WakeUpStatus.achieved,
+      status: WakeUpStatus.none,
       actualWakeUpTime: null,
     );
     final dateKey = tempRecord.dateKey;
@@ -102,4 +131,5 @@ class WakeUpRecordsNotifier extends AsyncNotifier<Map<String, WakeUpRecord>> {
       return usecase();
     });
   }
+
 }

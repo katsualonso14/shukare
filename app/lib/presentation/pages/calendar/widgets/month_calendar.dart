@@ -61,16 +61,12 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
   }
 
   void _handleDayTap(DateTime day) {
-    final now = DateTime.now();
-    final today = _normalizeDate(now);
     final dayNormalized = _normalizeDate(day);
+    final today = _normalizeDate(DateTime.now());
 
     // 未来の日付はタップ不可
-    if (dayNormalized.isAfter(today)) {
-      return;
-    }
+    if (dayNormalized.isAfter(today)) return;
 
-    // シングルタップで日付選択
     ref.read(selectedDateProvider.notifier).state = dayNormalized;
   }
 

@@ -2,36 +2,30 @@ import '../entity/wake_up_record.dart';
 import '../entity/wake_up_status.dart';
 import '../repository/wake_up_record_repository.dart';
 
-/// 「今日は休む」モードを設定/解除するUseCase
+/// 記録を切り替えるUseCase（記録あり⇔なし）
 class ToggleRestingModeUsecase {
   ToggleRestingModeUsecase(this._repository);
   final WakeUpRecordRepository _repository;
 
-  /// 指定した日を「お休みモード」に設定/解除する
-  /// - すでにrestingなら解除（記録削除）
-  /// - それ以外ならrestingに設定
+  /// 指定した日の記録を切り替える
+  /// - すでに記録があれば削除（noneに戻す）
+  /// - なければfailedとして記録
   Future<WakeUpRecord?> call(DateTime date) async {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final tempRecord = WakeUpRecord(
       date: normalizedDate,
-      status: WakeUpStatus.resting,
+      status: WakeUpStatus.none,
       actualWakeUpTime: null,
     );
     final dateKey = tempRecord.dateKey;
     
     final existing = await _repository.load(dateKey);
     
-    if (existing?.status == WakeUpStatus.resting) {
-      // すでにrestingなら解除（記録を削除）
+    if (existing != null && existing.status != WakeUpStatus.none) {
+      // 記録があれば削除
       final all = await _repository.loadAll();
       all.remove(dateKey);
       
-      // 再保存
-      final raw = <String, Map<String, dynamic>>{};
-      all.forEach((key, value) {
-        raw[key] = value.toJson();
-      });
-      // NOTE: clearしてから全件保存する方が安全
       await _repository.clearAll();
       for (final record in all.values) {
         await _repository.save(record);
@@ -39,10 +33,10 @@ class ToggleRestingModeUsecase {
       
       return null;
     } else {
-      // resting モードに設定
+      // 記録がなければadjustedとして記録
       final record = WakeUpRecord(
         date: normalizedDate,
-        status: WakeUpStatus.resting,
+        status: WakeUpStatus.adjusted,
         actualWakeUpTime: null,
       );
       await _repository.save(record);

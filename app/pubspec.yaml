@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.4+1
+version: 1.1.1+2
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -29,6 +29,8 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8
 
@@ -45,10 +47,14 @@ dependencies:
   flutter_local_notifications: ^18.0.1
 
   # 日付フォーマット・月名（locale対応）
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # 通知の日次スケジュール（タイムゾーン指定）
   timezone: ^0.9.4
+
+  # Firebase
+  firebase_core: ^3.13.1
+  firebase_analytics: ^11.4.5
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +72,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

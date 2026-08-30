@@ -1,55 +1,63 @@
-/// 起床記録のステータス（罪悪感ゼロ設計）
+/// カレンダーに記録できる3種類の状態
 enum WakeUpStatus {
-  /// 達成: 目標時間内に起きられた
-  achieved,
+  /// ✨ できた（目標時刻の前後30分以内）
+  success,
 
-  /// 惜しい: 目標から30分以内の遅刻
-  nearMiss,
+  /// 🌙 今日はゆっくり休めた日
+  rested,
 
-  /// 公式お休み: ユーザーが事前に「今日は休む」と決めた日
-  resting,
+  /// ☁️ 調整日
+  adjusted,
 
-  /// 記録の継続: 大幅な遅刻だが、アプリを開いて記録した
-  tried;
+  /// 未記録（アプリを開いていない日）— カレンダーは空白表示
+  none;
 
-  /// ステータスに応じた優しいメッセージを返す
-  String get encouragementMessage {
-    switch (this) {
-      case WakeUpStatus.achieved:
-        return 'すごい！目標時間に起きられたね！';
-      case WakeUpStatus.nearMiss:
-        return 'おしい！あと一歩で完全勝利だったね！';
-      case WakeUpStatus.resting:
-        return '今日は公式リフレッシュ日。明日からまた頑張ろう';
-      case WakeUpStatus.tried:
-        return 'お昼だけど記録して偉い！自分と向き合えてる証拠だよ';
-    }
-  }
-
-  /// カレンダー表示用の絵文字
+  /// カレンダー下に表示する絵文字
   String get emoji {
     switch (this) {
-      case WakeUpStatus.achieved:
+      case WakeUpStatus.success:
         return '✨';
-      case WakeUpStatus.nearMiss:
-        return '💪';
-      case WakeUpStatus.resting:
+      case WakeUpStatus.rested:
         return '🌙';
-      case WakeUpStatus.tried:
-        return '🌱';
+      case WakeUpStatus.adjusted:
+        return '☁️';
+      case WakeUpStatus.none:
+        return '';
     }
   }
 
-  /// JSON保存用の文字列に変換
+  /// ボトムシートなどに表示するラベル
+  String get label {
+    switch (this) {
+      case WakeUpStatus.success:
+        return 'できた';
+      case WakeUpStatus.rested:
+        return '今日はゆっくり休めた日';
+      case WakeUpStatus.adjusted:
+        return '調整日';
+      case WakeUpStatus.none:
+        return '';
+    }
+  }
+
   String toJson() => name;
 
-  /// JSON読み込み時の変換（存在しない値の場合はnullを返す）
-  static WakeUpStatus? fromJson(String? value) {
-    if (value == null) return null;
-    try {
-      return WakeUpStatus.values.firstWhere((e) => e.name == value);
-    } catch (_) {
-      return null;
+  static WakeUpStatus fromJson(String? value) {
+    if (value == null) return WakeUpStatus.none;
+    switch (value) {
+      // 旧ステータスの移行マッピング
+      case 'achieved':
+        return WakeUpStatus.success;
+      case 'failed':
+      case 'nearMiss':
+      case 'tried':
+      case 'resting':
+        return WakeUpStatus.adjusted;
+      default:
+        return WakeUpStatus.values.firstWhere(
+          (e) => e.name == value,
+          orElse: () => WakeUpStatus.none,
+        );
     }
   }
 }

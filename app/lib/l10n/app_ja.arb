@@ -1,0 +1,97 @@
+{
+  "@@locale": "ja",
+
+  "appTagline": "今日も、少しだけ。",
+  "editRecord": "記録を修正する",
+
+  "streakDays": "{count}日続いてる{emoji}",
+  "@streakDays": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "emoji": { "type": "String" }
+    }
+  },
+  "streakStart": "続きはここから{emoji}",
+  "@streakStart": {
+    "placeholders": {
+      "emoji": { "type": "String" }
+    }
+  },
+
+  "settings": "設定",
+  "sectionGoal": "目標設定",
+  "sectionPersonalize": "パーソナライズ",
+  "sectionNotification": "通知",
+  "sectionCalendar": "カレンダー",
+  "sectionData": "データ",
+
+  "targetWakeUpTime": "起床目標時間",
+  "targetWakeUpTimeSubtitle": "この時間の前後30分以内で成功判定",
+  "wakeUpTimeHelpText": "起床目標時間を選択",
+  "wakeUpTimeSet": "起床目標時間を{time}に設定しました",
+  "@wakeUpTimeSet": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+
+  "appPersonality": "アプリの性格",
+  "appPersonalitySubtitle": "優しく励ますか、厳しく背中を押すかを選べます",
+  "personaGentle": "😊 優しい",
+  "personaGentleDesc": "やわらかく応援",
+  "personaStrict": "💪 厳しい",
+  "personaStrictDesc": "しっかり叱咤激励",
+
+  "mbtiType": "性格タイプ（MBTI）",
+  "mbtiNotSet": "未設定",
+  "selectMbtiTitle": "性格タイプを選択",
+  "mbtiSelectSubtitle": "MBTIを選ぶとメッセージがより親しみやすくなります",
+  "mbtiGroupAnalyst": "アナリスト（分析家）",
+  "mbtiGroupDiplomat": "外交官",
+  "mbtiGroupSentinel": "番人",
+  "mbtiGroupExplorer": "探検家",
+  "mbtiSkip": "設定しない",
+
+  "notificationEnable": "通知をする",
+  "notificationTime": "通知時刻",
+
+  "weekStart": "週の始まり",
+  "sunday": "日曜日",
+  "monday": "月曜日",
+
+  "resetAllData": "データをすべてリセット",
+  "resetDataTitle": "データのリセット",
+  "resetDataContent": "チェックした日付データをすべて削除します。\nこの操作は取り消せません。よろしいですか？",
+  "reset": "リセット",
+  "resetDone": "データをリセットしました",
+
+  "cancel": "キャンセル",
+  "confirm": "設定",
+  "loadError": "読み込みに失敗しました",
+
+  "navCalendar": "カレンダー",
+  "navStats": "データ",
+
+  "weeklyRecordTitle": "今週の記録",
+  "weekdayMon": "月",
+  "weekdayTue": "火",
+  "weekdayWed": "水",
+  "weekdayThu": "木",
+  "weekdayFri": "金",
+  "weekdaySat": "土",
+  "weekdaySun": "日",
+  "statSuccess": "できた",
+  "statRest": "休み・調整",
+  "statNone": "記録なし",
+  "dayCount": "{count}日",
+  "@dayCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "optionSuccess": "できた",
+  "optionRested": "今日はゆっくり休めた日",
+  "optionAdjusted": "調整日",
+  "tapAgainToDelete": "もう一度タップで削除"
+}
