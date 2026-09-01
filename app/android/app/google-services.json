@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1002942112869",
+    "project_id": "shukare-firebase",
+    "storage_bucket": "shukare-firebase.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1002942112869:android:f9044e7edf7cec18e7128c",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBreetDZvax2eat0pHgxDOd8Oh9el9qpSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

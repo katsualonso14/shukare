@@ -1,0 +1,127 @@
+{
+  "@@locale": "en",
+
+  "appTagline": "Just a little, today.",
+  "editRecord": "Edit record",
+
+  "streakDays": "{count} days going{emoji}",
+  "@streakDays": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "emoji": { "type": "String" }
+    }
+  },
+  "streakStart": "Start here{emoji}",
+  "@streakStart": {
+    "placeholders": {
+      "emoji": { "type": "String" }
+    }
+  },
+
+  "settings": "Settings",
+  "sectionGoal": "Goal",
+  "sectionPersonalize": "Personalize",
+  "sectionNotification": "Notification",
+  "sectionCalendar": "Calendar",
+  "sectionData": "Data",
+
+  "targetWakeUpTime": "Wake-up goal",
+  "targetWakeUpTimeSubtitle": "Success if within ±30 min of this time",
+  "wakeUpTimeHelpText": "Select wake-up goal time",
+  "wakeUpTimeSet": "Wake-up goal set to {time}",
+  "@wakeUpTimeSet": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+
+  "appPersonality": "App personality",
+  "appPersonalitySubtitle": "Choose gentle encouragement or tough love",
+  "personaGentle": "😊 Gentle",
+  "personaGentleDesc": "Warm support",
+  "personaStrict": "💪 Strict",
+  "personaStrictDesc": "Tough push",
+
+  "mbtiType": "Personality type (MBTI)",
+  "mbtiNotSet": "Not set",
+  "selectMbtiTitle": "Select personality type",
+  "mbtiSelectSubtitle": "Messages feel more personal with MBTI",
+  "mbtiGroupAnalyst": "Analysts",
+  "mbtiGroupDiplomat": "Diplomats",
+  "mbtiGroupSentinel": "Sentinels",
+  "mbtiGroupExplorer": "Explorers",
+  "mbtiSkip": "Don't set",
+
+  "notificationEnable": "Enable notifications",
+  "notificationTime": "Notification time",
+
+  "weekStart": "Week starts on",
+  "sunday": "Sunday",
+  "monday": "Monday",
+
+  "resetAllData": "Reset all data",
+  "resetDataTitle": "Reset Data",
+  "resetDataContent": "This will delete all your check history.\nThis action cannot be undone. Continue?",
+  "reset": "Reset",
+  "resetDone": "Data has been reset",
+
+  "cancel": "Cancel",
+  "confirm": "Set",
+  "loadError": "Failed to load",
+
+  "navCalendar": "Calendar",
+  "navStats": "Stats",
+
+  "weeklyRecordTitle": "This week",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+  "statSuccess": "Did it",
+  "statRest": "Rest",
+  "statNone": "No log",
+  "dayCount": "{count}d",
+  "@dayCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "optionSuccess": "Did it",
+  "optionRested": "Rest day",
+  "optionAdjusted": "Adjustment day",
+  "tapAgainToDelete": "Tap again to remove",
+
+  "achievementStreak": "{count}-day streak",
+  "@achievementStreak": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "achievementStart": "Day one",
+  "achievementMilestone": "{count} days 🎉",
+  "@achievementMilestone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "achievementWokeAt": "Woke up",
+  "achievementEarlyBy": "{minutes} min before target",
+  "@achievementEarlyBy": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "achievementLateBy": "{minutes} min after target",
+  "@achievementLateBy": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "achievementOnTarget": "Right on target",
+  "achievementThisMonth": "This month",
+  "achievementClose": "Good morning"
+}
