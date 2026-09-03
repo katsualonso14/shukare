@@ -230,4 +230,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get achievementClose => '今日もいい朝';
+
+  @override
+  String weeklyReportRange(String start, String end) {
+    return '$start 〜 $end の振り返り';
+  }
+
+  @override
+  String get weeklyReportButtonGentle => '今週もがんばる！';
+
+  @override
+  String get weeklyReportButtonStrict => '確認した';
 }

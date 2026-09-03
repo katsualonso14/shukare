@@ -4,6 +4,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../domain/entity/persona_type.dart';
 import '../../../../domain/entity/wake_up_status.dart';
 import '../../../../domain/service/weekly_report_service.dart';
+import 'package:mobile/l10n/app_localizations.dart';
 
 /// ウィークリーレポートを表示するダイアログ
 ///
@@ -133,7 +134,7 @@ class WeeklyReportDialog extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            _getWeekRangeText(),
+            _getWeekRangeText(context),
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
@@ -177,7 +178,16 @@ class WeeklyReportDialog extends StatelessWidget {
   }
 
   Widget _buildWeeklyChart(BuildContext context, bool isStrict) {
-    final weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+    final l10n = AppLocalizations.of(context)!;
+    final weekdays = [
+      l10n.weekdayMon,
+      l10n.weekdayTue,
+      l10n.weekdayWed,
+      l10n.weekdayThu,
+      l10n.weekdayFri,
+      l10n.weekdaySat,
+      l10n.weekdaySun,
+    ];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -224,7 +234,9 @@ class WeeklyReportDialog extends StatelessWidget {
 
   Widget _buildButton(BuildContext context, bool isStrict, int level) {
     final color = _getAccentColor(isStrict, level);
-    final buttonText = isStrict ? '確認した' : '今週もがんばる！';
+    final l10n = AppLocalizations.of(context)!;
+    final buttonText =
+        isStrict ? l10n.weeklyReportButtonStrict : l10n.weeklyReportButtonGentle;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -253,10 +265,11 @@ class WeeklyReportDialog extends StatelessWidget {
     );
   }
 
-  String _getWeekRangeText() {
+  String _getWeekRangeText(BuildContext context) {
     final startText = DateFormat('M/d').format(report.weekStartDate);
     final endText = DateFormat('M/d').format(report.weekEndDate);
-    return '$startText 〜 $endText の振り返り';
+    return AppLocalizations.of(context)!
+        .weeklyReportRange(startText, endText);
   }
 
   Color _getAccentColor(bool isStrict, int level) {
