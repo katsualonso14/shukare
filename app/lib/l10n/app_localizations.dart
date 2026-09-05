@@ -523,6 +523,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'See you tomorrow'**
   String get achievementAdjustedClose;
+
+  /// No description provided for @weeklyReportRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking back on {start} - {end}'**
+  String weeklyReportRange(String start, String end);
+
+  /// No description provided for @weeklyReportButtonGentle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep going this week!'**
+  String get weeklyReportButtonGentle;
+
+  /// No description provided for @weeklyReportButtonStrict.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get weeklyReportButtonStrict;
 }
 
 class _AppLocalizationsDelegate
