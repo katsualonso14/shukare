@@ -72,10 +72,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (!mounted) return;
 
     final profile = ref.read(userProfileProvider);
+    // できた日・調整日それぞれのペルソナ別メッセージを使う
     final message =
-        ref.read(personalizedMessageProvider(WakeUpStatus.success));
+        ref.read(personalizedMessageProvider(achievement.status));
 
     await ref.read(analyticsServiceProvider).logDailyAchievementViewed(
+          status: achievement.status.name,
           streak: achievement.streak,
           isMilestone: achievement.isMilestone,
         );

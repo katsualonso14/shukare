@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../core/haptics/app_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../domain/entity/wake_up_record.dart';
@@ -67,6 +68,8 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
     // 未来の日付はタップ不可
     if (dayNormalized.isAfter(today)) return;
 
+    // 反応しない未来日では鳴らさない（＝触覚が「押せた」の合図として機能する）
+    AppHaptics.selection();
     ref.read(selectedDateProvider.notifier).state = dayNormalized;
   }
 

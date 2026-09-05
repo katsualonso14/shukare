@@ -123,5 +123,7 @@
   },
   "achievementOnTarget": "Right on target",
   "achievementThisMonth": "This month",
-  "achievementClose": "Good morning"
+  "achievementClose": "Good morning",
+  "achievementAdjusted": "An adjusting day",
+  "achievementAdjustedClose": "See you tomorrow"
 }

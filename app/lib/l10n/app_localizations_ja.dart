@@ -230,4 +230,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get achievementClose => '今日もいい朝';
+
+  @override
+  String get achievementAdjusted => '今日は調整日';
+
+  @override
+  String get achievementAdjustedClose => 'また明日';
 }
