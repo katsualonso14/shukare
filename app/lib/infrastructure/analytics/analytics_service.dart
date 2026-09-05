@@ -21,12 +21,22 @@ class AnalyticsService {
   Future<void> logMonthlyReportViewed() =>
       _analytics.logEvent(name: 'monthly_report_viewed');
 
+  /// 今日のモーダルを見せた。[status] は success / adjusted。
+  ///
+  /// status を持たせる理由: できた日と調整日で同じイベント名を使うので、
+  /// これが無いと「調整日のモーダルが閉じられているだけ」なのか
+  /// 「達成が続いている」のかが後から区別できない。
   Future<void> logDailyAchievementViewed({
+    required String status,
     required int streak,
     required bool isMilestone,
   }) =>
       _analytics.logEvent(
         name: 'daily_achievement_viewed',
-        parameters: {'streak': streak, 'is_milestone': isMilestone ? 1 : 0},
+        parameters: {
+          'status': status,
+          'streak': streak,
+          'is_milestone': isMilestone ? 1 : 0,
+        },
       );
 }

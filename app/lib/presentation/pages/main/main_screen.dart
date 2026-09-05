@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/l10n/app_localizations.dart';
+import '../../../../core/haptics/app_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../infrastructure/di/infrastructure_providers.dart';
 import '../calendar/calendar_screen.dart';
@@ -32,6 +33,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) {
+          AppHaptics.selection();
           ref.read(analyticsServiceProvider).logScreenView(_screenNames[i]);
           setState(() => _currentIndex = i);
         },

@@ -235,6 +235,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get achievementClose => 'Good morning';
 
   @override
+  String get achievementAdjusted => 'An adjusting day';
+
+  @override
+  String get achievementAdjustedClose => 'See you tomorrow';
+
+  @override
   String weeklyReportRange(String start, String end) {
     return 'Looking back on $start - $end';
   }

@@ -4,14 +4,18 @@ import '../entity/target_wake_up_time.dart';
 import '../entity/wake_up_record.dart';
 import '../entity/wake_up_status.dart';
 
-/// 「今日できた」をお披露目するための材料一式。
+/// 「今日の1日」をお披露目するための材料一式。
 ///
 /// カレンダーのドットは AutoEvaluateWakeUpUsecase が起動時に無言で置いてしまうので、
-/// ユーザーは達成した瞬間を目撃できない。この値オブジェクトはその瞬間を1枚の
-/// モーダルに再構成するために必要な数字だけを持つ（表示の判断は presentation 側）。
+/// ユーザーは今日の判定が下りた瞬間を目撃できない。この値オブジェクトはその瞬間を
+/// 1枚のモーダルに再構成するために必要な数字だけを持つ（表示の判断は presentation 側）。
+///
+/// success（できた）と adjusted（調整日）の両方を運ぶ。名前は achievement のままだが、
+/// 中身は「今日どうだったか」であって達成専用ではない。[status] で見分ける。
 class DailyAchievement {
   const DailyAchievement({
     required this.date,
+    required this.status,
     required this.streak,
     required this.weekStart,
     required this.weekStatuses,
@@ -24,7 +28,10 @@ class DailyAchievement {
   /// 対象日（＝今日）
   final DateTime date;
 
-  /// 今日を含む連続達成日数
+  /// 今日の判定。success か adjusted のどちらか
+  final WakeUpStatus status;
+
+  /// 今日を含む連続達成日数。adjusted の日は 0（＝連続は今日で途切れている）
   final int streak;
 
   /// 週ストリップの左端の日付
@@ -45,8 +52,12 @@ class DailyAchievement {
   /// 目標時刻との差。負なら目標より早い。actualWakeUpTime が無いときは null
   final Duration? diffFromTarget;
 
-  /// 節目の日か（演出を強める）
-  bool get isMilestone => DailyAchievementService.isMilestone(streak);
+  /// できた日か（演出の重さを分ける唯一の分岐点）
+  bool get isSuccess => status == WakeUpStatus.success;
+
+  /// 節目の日か（演出を強める）。調整日は節目にならない
+  bool get isMilestone =>
+      isSuccess && DailyAchievementService.isMilestone(streak);
 }
 
 /// 今日の達成モーダルを出すかどうかと、その中身を決めるサービス。
@@ -70,7 +81,16 @@ class DailyAchievementService {
     return !_isSameDay(now, lastShownDate);
   }
 
-  /// 今日が success のときだけ材料を組み立てる。それ以外（休み・調整・未記録）は null。
+  /// モーダルを出す対象になる今日の判定。
+  ///
+  /// rested（🌙 ゆっくり休めた日）を外す理由: これはユーザーが自分で選んだ「休む」で、
+  /// 判定が下りた出来事ではない。自分で決めたことをモーダルで報告し返す意味がない。
+  static const Set<WakeUpStatus> _shownStatuses = {
+    WakeUpStatus.success,
+    WakeUpStatus.adjusted,
+  };
+
+  /// 今日が success か adjusted のときだけ材料を組み立てる。それ以外（休み・未記録）は null。
   DailyAchievement? build({
     required DateTime now,
     required Map<String, WakeUpRecord> allRecords,
@@ -79,7 +99,7 @@ class DailyAchievementService {
   }) {
     final today = DateTime(now.year, now.month, now.day);
     final todayRecord = allRecords[_key(today)];
-    if (todayRecord == null || todayRecord.status != WakeUpStatus.success) {
+    if (todayRecord == null || !_shownStatuses.contains(todayRecord.status)) {
       return null;
     }
 
@@ -96,6 +116,7 @@ class DailyAchievementService {
 
     return DailyAchievement(
       date: today,
+      status: todayRecord.status,
       streak: _streakEndingAt(today, allRecords),
       weekStart: weekStart,
       weekStatuses: weekStatuses,

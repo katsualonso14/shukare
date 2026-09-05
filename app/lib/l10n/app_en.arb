@@ -128,6 +128,8 @@
   "achievementOnTarget": "Right on target",
   "achievementThisMonth": "This month",
   "achievementClose": "Good morning",
+  "achievementAdjusted": "An adjusting day",
+  "achievementAdjustedClose": "See you tomorrow",
   "weeklyReportRange": "Looking back on {start} - {end}",
   "weeklyReportButtonGentle": "Keep going this week!",
   "weeklyReportButtonStrict": "Got it",

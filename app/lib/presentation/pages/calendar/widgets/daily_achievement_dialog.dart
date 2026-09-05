@@ -2,18 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile/l10n/app_localizations.dart';
 
+import '../../../../core/haptics/app_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../domain/entity/persona_type.dart';
 import '../../../../domain/entity/wake_up_status.dart';
 import '../../../../domain/service/daily_achievement_service.dart';
 
-/// 「今日できた」をお披露目するモーダル。
+/// 「今日どうだったか」をお披露目するモーダル。
 ///
-/// なぜ必要か: 達成の判定は起動時に無言で走り、カレンダーには最初からそこに
-/// あった顔でドットが並ぶ。達成した瞬間が誰にも目撃されないので、達成感が
+/// なぜ必要か: 判定は起動時に無言で走り、カレンダーには最初からそこにあった顔で
+/// ドットが並ぶ。今日が決まった瞬間が誰にも目撃されないので、達成感も区切りも
 /// どこにも発生しない。このモーダルは新しい情報を足すのではなく、
 /// **今日のドットが置かれる瞬間だけをここへ移して見せる**（週ストリップの
-/// 今日の位置が、開いた後に遅れて「ポン」と入る）。
+/// 今日の位置が、開いた後に遅れて入る）。
+///
+/// できた日（success）と調整日（adjusted）の両方を出すが、**演出の重さを変える**。
+/// 同じ勢いで出すと調整日が「失敗を知らせるポップアップ」になり、
+/// 「目標を過ぎても失敗扱いにしない」というこのアプリの前提と正面からぶつかる:
+///
+/// | | できた日 | 調整日 |
+/// |---|---|---|
+/// | 見出しの絵文字 | 下から弾んで出る（easeOutBack） | 横からふわっと流れ込む（easeOutCubic） |
+/// | 今日のドット | elasticOut で「ポン」 | フェード＋わずかな拡大で「すっ」 |
+/// | 触覚 | light→medium の2段（トトン） | light 1回だけ |
+/// | 色 | セージ／節目はローズダスト | ウォームグレー（主張しない） |
 class DailyAchievementDialog extends StatefulWidget {
   const DailyAchievementDialog({
     super.key,
@@ -53,13 +65,23 @@ class _DailyAchievementDialogState extends State<DailyAchievementDialog>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
+  bool get _isSuccess => widget.achievement.isSuccess;
+
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      // 調整日はひと呼吸ぶん長く流す（弾まないぶん、速いと素っ気なく見える）
+      duration: Duration(milliseconds: _isSuccess ? 1100 : 1300),
     )..forward();
+
+    // 画面が出るのと同じ瞬間に手にも返す。目を上げる前に「今日が決まった」が届く
+    if (_isSuccess) {
+      AppHaptics.celebrate();
+    } else {
+      AppHaptics.gentle();
+    }
   }
 
   @override
@@ -76,12 +98,22 @@ class _DailyAchievementDialogState extends State<DailyAchievementDialog>
     return '🌱';
   }
 
+  String _headline(AppLocalizations l10n) {
+    final a = widget.achievement;
+    if (!_isSuccess) return l10n.achievementAdjusted;
+    if (a.isMilestone) return l10n.achievementMilestone(a.streak);
+    return a.streak >= 2
+        ? l10n.achievementStreak(a.streak)
+        : l10n.achievementStart;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final a = widget.achievement;
-    final accent =
-        a.isMilestone ? AppColors.roseDust : AppColors.primary;
+    final accent = !_isSuccess
+        ? AppColors.warmGray
+        : (a.isMilestone ? AppColors.roseDust : AppColors.primary);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -103,14 +135,13 @@ class _DailyAchievementDialogState extends State<DailyAchievementDialog>
           mainAxisSize: MainAxisSize.min,
           children: [
             _Header(
-              emoji: a.isMilestone ? '🎉' : _streakEmoji,
-              headline: a.isMilestone
-                  ? l10n.achievementMilestone(a.streak)
-                  : (a.streak >= 2
-                      ? l10n.achievementStreak(a.streak)
-                      : l10n.achievementStart),
+              emoji: _isSuccess
+                  ? (a.isMilestone ? '🎉' : _streakEmoji)
+                  : WakeUpStatus.adjusted.emoji,
+              headline: _headline(l10n),
               accent: accent,
               controller: _controller,
+              isSuccess: _isSuccess,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 22, 24, 8),
@@ -120,6 +151,7 @@ class _DailyAchievementDialogState extends State<DailyAchievementDialog>
                     achievement: a,
                     accent: accent,
                     controller: _controller,
+                    isSuccess: _isSuccess,
                   ),
                   const SizedBox(height: 22),
                   _Stats(
@@ -154,7 +186,9 @@ class _DailyAchievementDialogState extends State<DailyAchievementDialog>
                     ),
                   ),
                   child: Text(
-                    l10n.achievementClose,
+                    _isSuccess
+                        ? l10n.achievementClose
+                        : l10n.achievementAdjustedClose,
                     style: TextStyle(
                       color: accent,
                       fontSize: 15,
@@ -178,20 +212,17 @@ class _Header extends StatelessWidget {
     required this.headline,
     required this.accent,
     required this.controller,
+    required this.isSuccess,
   });
 
   final String emoji;
   final String headline;
   final Color accent;
   final AnimationController controller;
+  final bool isSuccess;
 
   @override
   Widget build(BuildContext context) {
-    final pop = CurvedAnimation(
-      parent: controller,
-      curve: const Interval(0, 0.45, curve: Curves.easeOutBack),
-    );
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 26),
@@ -208,9 +239,10 @@ class _Header extends StatelessWidget {
       ),
       child: Column(
         children: [
-          ScaleTransition(
-            scale: pop,
-            child: Text(emoji, style: const TextStyle(fontSize: 44)),
+          _HeaderEmoji(
+            emoji: emoji,
+            controller: controller,
+            isSuccess: isSuccess,
           ),
           const SizedBox(height: 10),
           Text(
@@ -228,17 +260,66 @@ class _Header extends StatelessWidget {
   }
 }
 
+/// 見出しの絵文字の入り方。ここだけで success / adjusted の性格の差を作る
+class _HeaderEmoji extends StatelessWidget {
+  const _HeaderEmoji({
+    required this.emoji,
+    required this.controller,
+    required this.isSuccess,
+  });
+
+  final String emoji;
+  final AnimationController controller;
+  final bool isSuccess;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(emoji, style: const TextStyle(fontSize: 44));
+
+    if (isSuccess) {
+      // できた日は下から弾んで出る（＝勝ち取ったものが現れる）
+      return ScaleTransition(
+        scale: CurvedAnimation(
+          parent: controller,
+          curve: const Interval(0, 0.45, curve: Curves.easeOutBack),
+        ),
+        child: text,
+      );
+    }
+
+    // 調整日は雲が横から流れ込む。弾ませないのは、跳ねると「出来事」になって
+    // しまうため。ここで欲しいのは出来事ではなく、静かに過ぎていく時間の側
+    final drift = CurvedAnimation(
+      parent: controller,
+      curve: const Interval(0, 0.55, curve: Curves.easeOutCubic),
+    );
+
+    return FadeTransition(
+      opacity: drift,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(-0.5, 0),
+          end: Offset.zero,
+        ).animate(drift),
+        child: text,
+      ),
+    );
+  }
+}
+
 /// 今週7日分。今日だけが遅れて入る＝「いま置かれた」ことが分かる
 class _WeekStrip extends StatelessWidget {
   const _WeekStrip({
     required this.achievement,
     required this.accent,
     required this.controller,
+    required this.isSuccess,
   });
 
   final DailyAchievement achievement;
   final Color accent;
   final AnimationController controller;
+  final bool isSuccess;
 
   static const _labelKeys = [
     'weekdayMon',
@@ -270,13 +351,35 @@ class _WeekStrip extends StatelessWidget {
     }
   }
 
+  /// 今日のマークの置かれ方。できた日は弾み、調整日はすっと収まる
+  Widget _placeToday(Widget dot) {
+    if (isSuccess) {
+      return ScaleTransition(
+        scale: CurvedAnimation(
+          parent: controller,
+          curve: const Interval(0.5, 1, curve: Curves.elasticOut),
+        ),
+        child: dot,
+      );
+    }
+
+    final settle = CurvedAnimation(
+      parent: controller,
+      curve: const Interval(0.45, 1, curve: Curves.easeOutCubic),
+    );
+
+    return FadeTransition(
+      opacity: settle,
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 0.85, end: 1).animate(settle),
+        child: dot,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final todayPop = CurvedAnimation(
-      parent: controller,
-      curve: const Interval(0.5, 1, curve: Curves.elasticOut),
-    );
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -303,11 +406,7 @@ class _WeekStrip extends StatelessWidget {
             const SizedBox(height: 8),
             SizedBox(
               height: 34,
-              child: Center(
-                child: isToday
-                    ? ScaleTransition(scale: todayPop, child: dot)
-                    : dot,
-              ),
+              child: Center(child: isToday ? _placeToday(dot) : dot),
             ),
           ],
         );
@@ -326,6 +425,18 @@ class _WeekDot extends StatelessWidget {
   final WakeUpStatus? status;
   final Color accent;
   final bool isToday;
+
+  /// 今日だけリングで囲って「ここ」を示す（大きさだけだと差が読めない）
+  Widget _ringed(Widget child) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: accent.withValues(alpha: 0.55), width: 2),
+      ),
+      child: child,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -356,26 +467,23 @@ class _WeekDot extends StatelessWidget {
         ),
       );
 
-      if (!isToday) return dot;
-
-      return Container(
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: accent.withValues(alpha: 0.55), width: 2),
-        ),
-        child: dot,
-      );
+      return isToday ? _ringed(dot) : dot;
     }
 
     if (status == WakeUpStatus.rested || status == WakeUpStatus.adjusted) {
-      return SizedBox(
-        width: 20,
-        height: 20,
+      final mark = SizedBox(
+        width: size,
+        height: size,
         child: Center(
-          child: Text(status!.emoji, style: const TextStyle(fontSize: 13)),
+          child: Text(
+            status!.emoji,
+            style: TextStyle(fontSize: isToday ? 18 : 13),
+          ),
         ),
       );
+
+      // 今日が調整日のときはここが主役になるので、success と同じ扱いで囲む
+      return isToday ? _ringed(mark) : mark;
     }
 
     // 未記録・未来は空欄（薄いリングだけ置いて位置を示す）
@@ -437,8 +545,9 @@ class _Stats extends StatelessWidget {
 
   /// 目標との差。ただし「遅い」は gentle では出さない。
   ///
-  /// ±30分以内はそもそも success と判定した日なので、報酬の画面で遅刻を
-  /// 蒸し返すと達成感を削るだけになる。厳しめのペルソナを選んだ人にだけ返す
+  /// success の日は ±30分以内なので、報酬の画面で遅刻を蒸し返すと達成感を削るだけ。
+  /// adjusted の日はそもそも目標から外れた日なので、分数を突きつけると
+  /// 「何分の負けか」を数える画面になる。どちらも厳しめのペルソナを選んだ人にだけ返す
   /// （＝ユーザーが自分で選んだ厳しさの範囲に収める）。
   String? _diffText(Duration? diff) {
     if (diff == null) return null;
