@@ -511,6 +511,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Good morning'**
   String get achievementClose;
+
+  /// No description provided for @achievementAdjusted.
+  ///
+  /// In en, this message translates to:
+  /// **'An adjusting day'**
+  String get achievementAdjusted;
+
+  /// No description provided for @achievementAdjustedClose.
+  ///
+  /// In en, this message translates to:
+  /// **'See you tomorrow'**
+  String get achievementAdjustedClose;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/l10n/app_localizations.dart';
+import '../../../../core/haptics/app_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../domain/entity/mbti.dart';
 import '../../../domain/entity/persona_type.dart';
@@ -202,6 +203,7 @@ class _TargetWakeUpTimeTile extends ConsumerWidget {
       },
     );
     if (time != null && context.mounted) {
+      AppHaptics.commit();
       await ref.read(targetWakeUpTimeProvider.notifier).setTargetWakeUpTime(
             time.hour,
             time.minute,
@@ -258,9 +260,12 @@ class _PersonaTypeTile extends ConsumerWidget {
                     label: l10n.personaGentle,
                     description: l10n.personaGentleDesc,
                     selected: profile.personaType == PersonaType.gentle,
-                    onTap: () => ref
-                        .read(userProfileProvider.notifier)
-                        .setPersonaType(PersonaType.gentle),
+                    onTap: () {
+                      AppHaptics.selection();
+                      ref
+                          .read(userProfileProvider.notifier)
+                          .setPersonaType(PersonaType.gentle);
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -269,9 +274,12 @@ class _PersonaTypeTile extends ConsumerWidget {
                     label: l10n.personaStrict,
                     description: l10n.personaStrictDesc,
                     selected: profile.personaType == PersonaType.strict,
-                    onTap: () => ref
-                        .read(userProfileProvider.notifier)
-                        .setPersonaType(PersonaType.strict),
+                    onTap: () {
+                      AppHaptics.selection();
+                      ref
+                          .read(userProfileProvider.notifier)
+                          .setPersonaType(PersonaType.strict);
+                    },
                   ),
                 ),
               ],
@@ -490,7 +498,10 @@ class _MbtiSelectorSheet extends StatelessWidget {
         ...types.map((mbti) => _MbtiOptionTile(
               mbti: mbti,
               isSelected: mbti == currentMbti,
-              onTap: () => Navigator.of(context).pop(mbti),
+              onTap: () {
+                AppHaptics.selection();
+                Navigator.of(context).pop(mbti);
+              },
             )),
         const SizedBox(height: 8),
       ],
@@ -598,8 +609,10 @@ class _NotificationSwitch extends ConsumerWidget {
       data: (settings) => _SettingsCard(
         child: SwitchListTile(
           value: settings.enabled,
-          onChanged: (value) =>
-              ref.read(notificationProvider.notifier).setEnabled(value),
+          onChanged: (value) {
+            AppHaptics.selection();
+            ref.read(notificationProvider.notifier).setEnabled(value);
+          },
           title: Text(
             l10n.notificationEnable,
             style: const TextStyle(
@@ -685,6 +698,7 @@ class _NotificationTimeTile extends ConsumerWidget {
       },
     );
     if (time != null && context.mounted) {
+      AppHaptics.commit();
       await ref.read(notificationProvider.notifier).setTime(time.hour, time.minute);
     }
   }
@@ -718,9 +732,12 @@ class _CalendarWeekStartTile extends ConsumerWidget {
                   child: _WeekStartChip(
                     label: l10n.sunday,
                     selected: weekStartSunday,
-                    onTap: () => ref
-                        .read(calendarWeekStartSundayProvider.notifier)
-                        .setWeekStartSunday(true),
+                    onTap: () {
+                      AppHaptics.selection();
+                      ref
+                          .read(calendarWeekStartSundayProvider.notifier)
+                          .setWeekStartSunday(true);
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -728,9 +745,12 @@ class _CalendarWeekStartTile extends ConsumerWidget {
                   child: _WeekStartChip(
                     label: l10n.monday,
                     selected: !weekStartSunday,
-                    onTap: () => ref
-                        .read(calendarWeekStartSundayProvider.notifier)
-                        .setWeekStartSunday(false),
+                    onTap: () {
+                      AppHaptics.selection();
+                      ref
+                          .read(calendarWeekStartSundayProvider.notifier)
+                          .setWeekStartSunday(false);
+                    },
                   ),
                 ),
               ],
@@ -827,6 +847,7 @@ class _ResetDataTile extends ConsumerWidget {
       },
     );
     if (ok == true && context.mounted) {
+      AppHaptics.commit();
       await ref.read(checkedDatesProvider.notifier).clearAll();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -68,11 +68,32 @@ void main() {
   });
 
   group('build', () {
-    test('今日が success でなければ null（調整日）', () {
+    test('今日が調整日なら組み立てる（連続は 0・節目にはしない）', () {
       final result = service.build(
         now: wednesday,
-        allRecords:
-            recordsOf({DateTime(2024, 1, 17): WakeUpStatus.adjusted}),
+        allRecords: recordsOf({
+          DateTime(2024, 1, 14): WakeUpStatus.success,
+          DateTime(2024, 1, 15): WakeUpStatus.success,
+          DateTime(2024, 1, 16): WakeUpStatus.success, // ここまで3連続
+          DateTime(2024, 1, 17): WakeUpStatus.adjusted, // 今日
+        }),
+        targetTime: target,
+        weekStartSunday: false,
+      );
+
+      expect(result, isNotNull);
+      expect(result!.status, WakeUpStatus.adjusted);
+      expect(result.isSuccess, isFalse);
+      // 今日で途切れているので 0。昨日までの3連続を持ち出して「途切れた」と
+      // 見せると、調整日のモーダルが喪失の通知になる
+      expect(result.streak, 0);
+      expect(result.isMilestone, isFalse);
+    });
+
+    test('今日が休んだ日なら null（自分で選んだ休みは報告し返さない）', () {
+      final result = service.build(
+        now: wednesday,
+        allRecords: recordsOf({DateTime(2024, 1, 17): WakeUpStatus.rested}),
         targetTime: target,
         weekStartSunday: false,
       );
@@ -102,6 +123,8 @@ void main() {
         weekStartSunday: false,
       );
       expect(result!.streak, 2);
+      expect(result.status, WakeUpStatus.success);
+      expect(result.isSuccess, isTrue);
     });
 
     test('月曜始まりだと水曜は index 2、週は7日ぶん、未来は null', () {

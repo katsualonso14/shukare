@@ -233,4 +233,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get achievementClose => 'Good morning';
+
+  @override
+  String get achievementAdjusted => 'An adjusting day';
+
+  @override
+  String get achievementAdjustedClose => 'See you tomorrow';
 }

@@ -123,5 +123,7 @@
   },
   "achievementOnTarget": "目標ぴったり",
   "achievementThisMonth": "今月",
-  "achievementClose": "今日もいい朝"
+  "achievementClose": "今日もいい朝",
+  "achievementAdjusted": "今日は調整日",
+  "achievementAdjustedClose": "また明日"
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile/l10n/app_localizations.dart';
 
+import '../../../../core/haptics/app_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../domain/entity/wake_up_status.dart';
 import '../../../../infrastructure/di/infrastructure_providers.dart';
@@ -98,6 +99,10 @@ class _OptionList extends ConsumerWidget {
   final AppLocalizations l10n;
 
   Future<void> _onTap(WidgetRef ref, WakeUpStatus tapped, BuildContext context) async {
+    // 記録が動く操作なので、保存を待たずにここで手応えを返す。
+    // await の後ろに置くと、保存が速い日と遅い日で手触りがずれる
+    AppHaptics.commit();
+
     final analytics = ref.read(analyticsServiceProvider);
     if (currentStatus == tapped) {
       await ref.read(wakeUpRecordsProvider.notifier).deleteRecord(date);
