@@ -165,6 +165,39 @@ final currentWeekReportProvider = FutureProvider<WeeklyReport>((ref) async {
   );
 });
 
+/// 進行中の週のタイトルを取得するプロバイダー（WeeklyStatsScreen 用）
+final currentWeekTitleProvider = Provider.family<String, WeeklyReport>((ref, report) {
+  final service = ref.watch(weeklyReportServiceProvider);
+  final profile = ref.watch(userProfileProvider);
+  final locale = ref.watch(currentLocaleProvider);
+
+  return service.getCurrentWeekTitle(
+    personaType: profile.personaType,
+    report: report,
+    locale: locale,
+  );
+});
+
+/// 進行中の週のフィードバックメッセージを取得するプロバイダー（WeeklyStatsScreen 用）
+final currentWeekMessageProvider = Provider.family<String, WeeklyReport>((ref, report) {
+  final service = ref.watch(weeklyReportServiceProvider);
+  final profile = ref.watch(userProfileProvider);
+  final locale = ref.watch(currentLocaleProvider);
+
+  return service.getCurrentWeekMessage(
+    personaType: profile.personaType,
+    mbti: profile.mbti,
+    report: report,
+    locale: locale,
+  );
+});
+
+/// 進行中の週の達成レベル（1〜5）を取得するプロバイダー（WeeklyStatsScreen 用）
+final currentWeekLevelProvider = Provider.family<int, WeeklyReport>((ref, report) {
+  final service = ref.watch(weeklyReportServiceProvider);
+  return service.getWeekProgressLevel(report);
+});
+
 /// ウィークリーレポートの表示済みフラグを更新するプロバイダー
 class WeeklyReportNotifier extends StateNotifier<DateTime?> {
   WeeklyReportNotifier(this._ref) : super(null);

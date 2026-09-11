@@ -55,14 +55,15 @@ class _StatsBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final message = ref.watch(weeklyReportMessageProvider(report));
-    final title = ref.watch(weeklyReportTitleProvider(report));
+    // 進行中の週なので、週明けの振り返り（先週分）用ではなく現在週用の文面を使う
+    final message = ref.watch(currentWeekMessageProvider(report));
+    final title = ref.watch(currentWeekTitleProvider(report));
     final subtitle = ref.watch(weeklyReportSubtitleProvider(report));
     ref.watch(userProfileProvider);
 
     final startText = DateFormat('M/d').format(report.weekStartDate);
     final endText = DateFormat('M/d').format(report.weekEndDate);
-    final level = report.achievementLevel;
+    final level = ref.watch(currentWeekLevelProvider(report));
     final ratePercent = (report.successRate * 100).round();
 
     return SingleChildScrollView(

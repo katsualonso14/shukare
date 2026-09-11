@@ -262,6 +262,230 @@ class WeeklyReportService {
     );
   }
 
+  // ─── 進行中の週（WeeklyStatsScreen 用） ──────────────────────────────────
+  //
+  // 週明けの振り返り（getTitle / getSubtitle / getFeedbackMessage）は「終わった7日間」を
+  // 評価するので、週の途中にそのまま流用すると必ず低評価に落ち、文面も「先週は…」になる。
+  // 進行中の週はここの専用メソッドで、経過日数（今日を含む）に対する進み具合として語る。
+
+  /// 進行中の週の状態を 1〜5 で返す
+  ///
+  /// 週明けレポートの [WeeklyReport.achievementLevel] と同じ 1〜5 の尺度に載せてあるので、
+  /// 画面側の色・絵文字のマッピングをそのまま使える。
+  /// 5: 経過日すべて達成 / 4: 6割以上 / 3: 1日以上できている
+  /// 2: まだ0だが週は進んでいる / 1: 週の序盤でこれから
+  int getWeekProgressLevel(WeeklyReport report) {
+    final elapsed = report.totalDays;
+    final success = report.successDays;
+
+    if (elapsed <= 0) return 1;
+    if (success >= elapsed) return 5;
+    if (success / elapsed >= 0.6) return 4;
+    if (success > 0) return 3;
+    return elapsed >= 3 ? 2 : 1;
+  }
+
+  /// 進行中の週のタイトルを取得
+  String getCurrentWeekTitle({
+    required PersonaType personaType,
+    required WeeklyReport report,
+    String locale = 'ja',
+  }) {
+    final level = getWeekProgressLevel(report);
+
+    if (locale != 'ja') {
+      if (personaType == PersonaType.strict) {
+        switch (level) {
+          case 5: return 'Perfect So Far';
+          case 4: return 'On Pace';
+          case 3: return 'Room to Improve';
+          case 2: return 'Turn It Around';
+          default: return 'The Week Has Started';
+        }
+      } else {
+        switch (level) {
+          case 5: return 'Perfect So Far✨';
+          case 4: return 'Good Going!';
+          case 3: return 'Not a Bad Pace';
+          case 2: return 'Still Time Left';
+          default: return 'This Week Starts Now';
+        }
+      }
+    }
+
+    if (personaType == PersonaType.strict) {
+      switch (level) {
+        case 5: return 'ここまで完璧';
+        case 4: return '良好なペース';
+        case 3: return 'まだ余地がある';
+        case 2: return '立て直せ';
+        default: return '今週が始まった';
+      }
+    } else {
+      switch (level) {
+        case 5: return 'ここまで完璧✨';
+        case 4: return 'いい調子！';
+        case 3: return '悪くないペース';
+        case 2: return 'まだ取り返せるよ';
+        default: return '今週はこれから';
+      }
+    }
+  }
+
+  /// 進行中の週のフィードバックメッセージを生成
+  String getCurrentWeekMessage({
+    required PersonaType personaType,
+    required MBTI? mbti,
+    required WeeklyReport report,
+    String locale = 'ja',
+  }) {
+    final level = getWeekProgressLevel(report);
+    final body = personaType == PersonaType.strict
+        ? _getStrictCurrentWeekBody(level, mbti, report, locale)
+        : _getGentleCurrentWeekBody(level, mbti, report, locale);
+
+    final remaining = 7 - report.totalDays;
+    final tail = _getRemainingClause(
+      remaining: remaining,
+      personaType: personaType,
+      locale: locale,
+    );
+
+    return '$body $tail';
+  }
+
+  /// 週の残りに触れる締めの一文
+  ///
+  /// 日曜（残り0日）に「残り0日」と言わないよう、ここで文ごと切り替える。
+  String _getRemainingClause({
+    required int remaining,
+    required PersonaType personaType,
+    required String locale,
+  }) {
+    if (locale != 'ja') {
+      if (personaType == PersonaType.strict) {
+        if (remaining <= 0) return 'Today closes the week. Finish it.';
+        if (remaining == 1) return 'One day left. Don\'t let up.';
+        return '$remaining days to go. Hold the pace.';
+      }
+      if (remaining <= 0) return 'Today wraps up the week — finish at your own pace.';
+      if (remaining == 1) return 'One more day — take it easy.';
+      return '$remaining days left — take it easy.';
+    }
+
+    if (personaType == PersonaType.strict) {
+      if (remaining <= 0) return '今週は今日で終わりだ。最後まで緩めるな。';
+      if (remaining == 1) return '残り1日、気を抜くな。';
+      return '残り$remaining日、ペースを落とすな。';
+    }
+    if (remaining <= 0) return '今週は今日で最後、最後まで自分のペースでいこうね。';
+    if (remaining == 1) return '残りは明日の1日、無理なくいこうね。';
+    return '残り$remaining日、無理なくいこうね。';
+  }
+
+  String _getGentleCurrentWeekBody(
+      int level, MBTI? mbti, WeeklyReport report, String locale) {
+    final elapsed = report.totalDays;
+    final success = report.successDays;
+
+    final isDiplomat =
+        mbti != null && ['INFJ', 'INFP', 'ENFJ', 'ENFP'].contains(mbti.code);
+    final isExplorer =
+        mbti != null && ['ISTP', 'ISFP', 'ESTP', 'ESFP'].contains(mbti.code);
+
+    if (locale != 'ja') {
+      switch (level) {
+        case 5:
+          return 'You\'ve hit every day this week so far — $success for $success. Amazing🎉';
+        case 4:
+          if (isExplorer) {
+            return '$success of $elapsed days this week. Love that you\'re keeping your own rhythm✨';
+          }
+          return 'You\'re at $success of $elapsed days this week. Looking good✨';
+        case 3:
+          if (isDiplomat) {
+            return 'You\'ve got $success days this week. It doesn\'t have to be perfect — the days you managed count💕';
+          }
+          return '$success of $elapsed days so far. Some days landed, and that\'s not bad at all😊';
+        case 2:
+          return 'No days landed yet, and $elapsed have gone by. Let\'s start again tomorrow morning🌱';
+        default:
+          return 'The week has only just begun. Starting from here is completely fine🤗';
+      }
+    }
+
+    switch (level) {
+      case 5:
+        return '今週はここまで$success日、ぜんぶできてるよ。すごい🎉';
+      case 4:
+        if (isExplorer) {
+          return '今週は$elapsed日中$success日。自分のペースで積めてるのが素敵だよ✨';
+        }
+        return '今週は$elapsed日中$success日できてるよ。いい感じ✨';
+      case 3:
+        if (isDiplomat) {
+          return '今週は$success日できてるね。完璧じゃなくて大丈夫、できた日をちゃんと数えよう💕';
+        }
+        return '今週は$elapsed日中$success日できてるね。できてる日もあって悪くないよ😊';
+      case 2:
+        return '今週はまだ達成0日だけど、$elapsed日過ぎたところ。明日の朝から仕切り直そう🌱';
+      default:
+        return '今週はまだ始まったばかり。ここからで全然大丈夫だよ🤗';
+    }
+  }
+
+  String _getStrictCurrentWeekBody(
+      int level, MBTI? mbti, WeeklyReport report, String locale) {
+    final elapsed = report.totalDays;
+    final success = report.successDays;
+    final rate = elapsed == 0 ? 0 : (success / elapsed * 100).round();
+
+    final isAnalyst =
+        mbti != null && ['INTJ', 'INTP', 'ENTJ', 'ENTP'].contains(mbti.code);
+    final isSentinel =
+        mbti != null && ['ISTJ', 'ISFJ', 'ESTJ', 'ESFJ'].contains(mbti.code);
+
+    if (locale != 'ja') {
+      switch (level) {
+        case 5:
+          return 'Every day this week so far: $success for $success. Maintain this standard.';
+        case 4:
+          if (isAnalyst) {
+            return '$success of $elapsed days ($rate%). On plan so far. Close the gap on the days you dropped.';
+          }
+          return '$success of $elapsed days ($rate%). The pace is acceptable.';
+        case 3:
+          return '$success of $elapsed days ($rate%). Some days landed, but it is not enough.';
+        case 2:
+          if (isSentinel) {
+            return '$elapsed days in and nothing achieved. Review the plan and rebuild from tomorrow.';
+          }
+          return '$elapsed days in and nothing achieved. No excuses — change it tomorrow morning.';
+        default:
+          return 'The week has started. How you stack it from here is everything.';
+      }
+    }
+
+    switch (level) {
+      case 5:
+        return '今週はここまで$success日、全て達成。この水準を維持しろ。';
+      case 4:
+        if (isAnalyst) {
+          return '今週は$elapsed日中$success日（$rate%）。今のところ計画通りだ。崩れた日の要因を潰しておけ。';
+        }
+        return '今週は$elapsed日中$success日（$rate%）。ペースは悪くない。';
+      case 3:
+        return '今週は$elapsed日中$success日（$rate%）。できている日はあるが、まだ足りない。';
+      case 2:
+        if (isSentinel) {
+          return '今週は$elapsed日経って達成0だ。計画を見直し、明日から積み直せ。';
+        }
+        return '今週は$elapsed日経って達成0だ。言い訳は要らない、明日の朝で変えろ。';
+      default:
+        return '今週が始まった。ここからどう積むかが全てだ。';
+    }
+  }
+
   /// パーソナタイプとMBTIに基づいたフィードバックメッセージを生成
   String getFeedbackMessage({
     required PersonaType personaType,
